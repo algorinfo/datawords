@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datawords"
-description = ''
+description = 'A library to work with text data'
 readme = "README.md"
 requires-python = ">=3.7"
 license = "MIT"
