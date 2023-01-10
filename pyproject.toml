@@ -32,10 +32,10 @@ dependencies = [
 	"emoji~=1.5.0",
 	"gensim~=4.1.2",
 	"nltk~=3.6.4",
-	"scikit-learn~=1.0",
-	"spacy~=3.1.3",
+	"scikit-learn~=1.2.0",
+	"spacy~=3.4.4",
 	"pytextrank~=3.2.1",
-	"scikit-network~=0.24.0",
+	"scikit-network~=0.28.3",
 	"langcodes[data]~=3.2.1",
 	"annoy~=1.17.0",
 	"pydantic>=1.7.4,!=1.8,!=1.8.1,<1.11.0"
@@ -67,6 +67,10 @@ dependencies = [
   "types-pytz",
   "types-emoji",
 ]
+
+[tool.hatch.envs.docker]
+type = "container"
+
 [tool.hatch.envs.default.scripts]
 cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=datawords --cov=tests {args}"
 no-cov = "cov --no-cov {args}"
