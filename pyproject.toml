@@ -38,9 +38,30 @@ dependencies = [
 	"scikit-network~=0.28.3",
 	"langcodes[data]~=3.2.1",
 	"annoy~=1.17.0",
-	"pydantic>=1.7.4,!=1.8,!=1.8.1,<1.11.0"
+	"pydantic>=1.7.4,!=1.8,!=1.8.1,<1.11.0",
+	"toolz",
+	"tqdm",
 ]
 dynamic = ["version"]
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[project.optional-dependencies]
+transformers = [
+	"transformers",
+	"sentencepiece",
+	# "torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp38-cp38-linux_x86_64.whl",
+  	"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp37-cp37m-linux_x86_64.whl ; python_version == '3.7'",
+	"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.0%2Bcpu-cp38-cp38-linux_x86_64.whl ; python_version == '3.8'",
+  	"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp39-cp39-linux_x86_64.whl ; python_version == '3.9'",
+  	"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp310-cp310-linux_x86_64.whl ; python_version == '3.10'",
+  	"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp311-cp311-linux_x86_64.whl ; python_version == '3.11'",
+	"sacremoses~=0.0.53",
+]
+
+#transformers-gpu = [
+#	"transformers>4.0.0"
+#]
 
 [project.urls]
 Documentation = "https://github.com/unknown/datawords#readme"
@@ -67,6 +88,11 @@ dependencies = [
   "types-pytz",
   "types-emoji",
 ]
+
+features = [
+   "transformers"
+]
+
 
 [tool.hatch.envs.docker]
 type = "container"
