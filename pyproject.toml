@@ -50,12 +50,12 @@ allow-direct-references = true
 transformers = [
 	"transformers",
 	"sentencepiece",
-	# "torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp38-cp38-linux_x86_64.whl",
-  	"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp37-cp37m-linux_x86_64.whl ; python_version == '3.7'",
-	"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.0%2Bcpu-cp38-cp38-linux_x86_64.whl ; python_version == '3.8'",
-  	"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp39-cp39-linux_x86_64.whl ; python_version == '3.9'",
-  	"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp310-cp310-linux_x86_64.whl ; python_version == '3.10'",
-  	"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp311-cp311-linux_x86_64.whl ; python_version == '3.11'",
+  	"torch~=1.13.1",
+	#"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp37-cp37m-linux_x86_64.whl ; python_version == '3.7'",
+	#"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp38-cp38-linux_x86_64.whl ; python_version == '3.8'",
+  	#"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp39-cp39-linux_x86_64.whl ; python_version == '3.9'",
+  	# "torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp310-cp310-linux_x86_64.whl ; python_version == '3.10'",
+  	# "torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp311-cp311-linux_x86_64.whl ; python_version == '3.11'",
 	"sacremoses~=0.0.53",
 ]
 
