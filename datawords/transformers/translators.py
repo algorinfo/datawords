@@ -2,14 +2,70 @@ import os
 from typing import List
 
 import torch.multiprocessing as mp
-from dataproc.conf import Config
-from dataproc.words.transformers.core import Transformer
-from dataproc.words.utils import locale
+from datawords.transformers.core import Transformer
 from toolz import partition_all
 from tqdm import tqdm
+from transformers import (
+    AutoModel,
+    AutoTokenizer,
+    BertModel,
+    BertTokenizerFast,
+    MarianMTModel,
+    MarianTokenizer,
+    pipeline,
+)
+
+
 
 ROMANCE_SUPPORT = ["fr", "fr_BE", "fr_CA", "fr_FR", "wa", "frp", "oc", "ca", "rm", "lld", "fur", "lij", "lmo", "es", "es_AR", "es_CL", "es_CO", "es_CR", "es_DO", "es_EC", "es_ES", "es_GT", "es_HN",
                    "es_MX", "es_NI", "es_PA", "es_PE", "es_PR", "es_SV", "es_UY", "es_VE", "pt", "pt_br", "pt_BR", "pt_PT", "gl", "lad", "an", "mwl", "it", "it_IT", "co", "nap", "scn", "vec", "sc", "ro", "la"]
+
+
+class TranslatorBase:
+    """ https://huggingface.co/docs/transformers/main/model_doc/marian"""
+    MODELS = {
+        "romance2en": "Helsinki-NLP/opus-mt-ROMANCE-en",
+        "en2romance": "Helsinki-NLP/opus-mt-en-ROMANCE"
+    }
+
+    def __init__(self, orig, dst, *, model_path="Helsinki-NLP/opus-mt-ROMANCE-en",
+                 limit_text=250, max_length=512):
+
+        self._fullpath = model_path
+        self._orig = orig
+        self._dst = dst
+        self._limit = limit_text
+        self.tokenizer = MarianTokenizer.from_pretrained(model_path, max_new_tokens=max_length)
+        self.model = MarianMTModel.from_pretrained(model_path)
+
+    @classmethod
+    def get_model_fullpath(cls, base_path,*, model_name):
+        return f"{base_path}/{cls.MODELS[model_name]}"
+
+    def flag_text_from_english(self, text: str):
+        to = f">>{self._dst}<< {text}"
+        return to
+
+    def _translate(self, src_text: str):
+        """ spanish/fr,etc to EN """
+        translated = self.model.generate(
+            **self.tokenizer(src_text,
+                             return_tensors="pt", padding=True))
+        rsp = [self.tokenizer.decode(
+            t, skip_special_tokens=True) for t in translated]
+        return rsp, translated
+
+    def fit_transform(self, X: List[str]):
+        translated = []
+        tensors = []
+        for ix, txt, in tqdm(enumerate(X)):
+            final_txt = txt
+            if self._orig == "en":
+                final_txt = self.flag_text_from_english(txt)
+            s, t = self._translate(final_txt[:self._limit])
+            translated.append(s[0])
+            tensors.append(t[0])
+        return translated, tensors
 
 
 class Translator:
@@ -18,7 +74,7 @@ class Translator:
     LANGS = ["romance_en", "en_romance"]
 
     def __init__(self, orig, dst, lang_model="en_romance",
-                 mp_process=True, models_path=f"{Config.BASE_PATH}/models/", limit_text=250):
+                 mp_process=True, models_path=f"/models/", limit_text=250):
         """ The maximum size allowed for helsinski models are 512 tokens """
 
         # pylint: disable=too-many-arguments

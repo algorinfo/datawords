@@ -49,8 +49,10 @@ allow-direct-references = true
 [project.optional-dependencies]
 transformers = [
 	"transformers",
+	"sentencepiece",
 	# "torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp38-cp38-linux_x86_64.whl",
-	"torch @ https://download.pytorch.org/whl/cpu/torch-1.10.0%2Bcpu-cp38-cp38-linux_x86_64.whl"
+	"torch @ https://download.pytorch.org/whl/cpu/torch-1.10.0%2Bcpu-cp38-cp38-linux_x86_64.whl",
+	"sacremoses~=0.0.53",
 ]
 
 #transformers-gpu = [
