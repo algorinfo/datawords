@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Optional
 from annoy import AnnoyIndex
 from pydantic import BaseModel
 
-from datawords.models import WordActor, create_word_actor
+from datawords.models_old import WordActor, create_word_actor
 
 
 class IndexConfig(BaseModel):

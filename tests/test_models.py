@@ -4,7 +4,7 @@ from gensim.models import KeyedVectors, Word2Vec
 from gensim.models.phrases import FrozenPhrases
 
 from datawords import parsers
-from datawords.models2 import PhrasesModel, Word2VecHelper
+from datawords.models import PhrasesModel, Word2VecHelper
 
 
 def open_texts():
