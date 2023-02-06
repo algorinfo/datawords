@@ -1,9 +1,10 @@
-from typing import List
+import tempfile
 
+from gensim.models import KeyedVectors, Word2Vec
 from gensim.models.phrases import FrozenPhrases
 
 from datawords import constants, parsers, utils
-from datawords.models2 import PhrasesModel
+from datawords.models2 import PhrasesModel, Word2VecHelper
 
 
 def open_texts():
@@ -18,8 +19,31 @@ def test_models2_phrases():
     parser_conf = parsers.ParserConf(lang="en")
     model = PhrasesModel(parser_conf)
     model.fit(texts)
-    model.save("test", fp="tests")
-    model2 = PhrasesModel.load("test", fp="tests")
 
-    assert isinstance(model._model, FrozenPhrases)
-    assert isinstance(model2._model, FrozenPhrases)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        fp = f"{tmpdir}/tests"
+        model.save(fp)
+        model2 = PhrasesModel.load(fp)
+
+    assert isinstance(model.model, FrozenPhrases)
+    assert isinstance(model2.model, FrozenPhrases)
+
+
+def test_models2_word2vec():
+    texts = open_texts()
+    parser_conf = parsers.ParserConf(lang="en")
+    # model = PhrasesModel(parser_conf)
+    # model.fit(texts)
+    wv = Word2VecHelper(parser_conf)
+    wv.fit(texts)
+    
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        fp = f"{tmpdir}/tests"
+        wv.save(fp)
+        wv2 = Word2VecHelper.load(fp)
+        kv = Word2VecHelper.load(fp, keyed_vectors=True)
+
+    assert isinstance(wv.model, Word2Vec)
+    assert isinstance(wv2.model, Word2Vec)
+    assert isinstance(kv.model, KeyedVectors)

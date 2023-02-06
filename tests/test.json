@@ -1,1 +1,0 @@
-{"name": "test", "lang": "en", "parser_conf": {"lang": "en", "emo_codes": false, "strip_accents": false, "lower": true, "numbers": true, "stopw_path": null, "use_stemmer": false, "phrases_model_path": null}, "min_count": 1, "threshold": 1}

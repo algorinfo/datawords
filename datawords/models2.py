@@ -1,5 +1,6 @@
 import json
-from typing import Any, Iterable, List, Optional, Set
+import os
+from typing import Any, Iterable, List, Optional, Set, Union
 
 import numpy as np
 from gensim.models import KeyedVectors, Word2Vec
@@ -15,6 +16,17 @@ class PhrasesModelMeta(BaseModel):
     parser_conf: parsers.ParserConf
     min_count: int = 1
     threshold: int = 1
+
+
+class W2VecMeta(BaseModel):
+    name: str
+    lang: str
+    parser_conf: parsers.ParserConf
+    phrases_model_path: Optional[str] = None
+    epoch: int = 5
+    size: int = 100
+    window: int = 5
+    min_count: int = 1
 
 
 class PhrasesModel:
@@ -35,6 +47,10 @@ class PhrasesModel:
         )
         self._model = model
         self._parser = self._parser_factory()
+
+    @property
+    def model(self) -> FrozenPhrases:
+        return self._model
 
     def _load_stopw(self):
         return parsers.load_stop2(
@@ -73,7 +89,10 @@ class PhrasesModel:
         r = self._model[txt.split()]
         return r
 
-    def save(self, name: str, *, fp: str):
+    def save(self, fp: Union[str, os.PathLike]):
+        name = str(fp).rsplit("/", maxsplit=1)[1]
+        utils.mkdir_p(fp)
+
         conf = PhrasesModelMeta(
             name=name,
             lang=self._parser_conf.lang,
@@ -86,7 +105,8 @@ class PhrasesModel:
             f.write(conf.json())
 
     @classmethod
-    def load(cls, name, fp) -> "PhrasesModel":
+    def load(cls, fp: Union[str, os.PathLike]) -> "PhrasesModel":
+        name = str(fp).rsplit("/", maxsplit=1)[1]
         with open(f"{fp}/{name}.json", "r") as f:
             jmeta = json.loads(f.read())
             meta = PhrasesModelMeta(**jmeta)
@@ -95,7 +115,7 @@ class PhrasesModel:
             parser_conf=meta.parser_conf,
             min_count=meta.min_count,
             threshold=meta.threshold,
-            model=model
+            model=model,
         )
         return obj
 
@@ -109,11 +129,13 @@ class Word2VecHelper:
         window=5,
         min_count=1,
         workers=1,
+        epoch=5,
+        model: Word2Vec = None,
+        using_kv=False,
     ):
 
         self._parser_conf = parser_conf
         self._stopw = self._load_stopw(parser_conf.lang, self._parser_conf.stopw_path)
-        self._parser = self._parser_factory()
         self._phrases = phrases_model
         # self._models_path = models_path
         self._min_count = min_count
@@ -121,7 +143,14 @@ class Word2VecHelper:
         self._window = window
         self._min_count = min_count
         self._workers = workers
-        self.wv = None
+        self._epoch = epoch
+        self._parser = self._parser_factory()
+        self.model: Union[Word2Vec, KeyedVectors] = model
+        self._using_kv = using_kv
+
+    @property
+    def wv(self) -> Union[Word2Vec, KeyedVectors]:
+        return self.model
 
     def _parser_factory(self) -> parsers.SentencesParser:
         return parsers.SentencesParser(
@@ -146,7 +175,7 @@ class Word2VecHelper:
             min_count=self._min_count,
             workers=self._workers,
         )
-        self.wv = model
+        self.model = model
 
     def parse(self, sentence: str):
         return self._parser.parse(sentence)
@@ -167,10 +196,53 @@ class Word2VecHelper:
         vectors = []
         for word in sentence:
             try:
-                _vect = self.wv[word]
+                _vect = self.model[word]
                 vectors.append(_vect)
             except KeyError:
                 pass
         if len(vectors) > 0:
             return np.sum(np.array(vectors), axis=0) / (len(vectors) + 0.001)
         return np.zeros((self._size,))
+
+    def save(self, fp: Union[str, os.PathLike]):
+        name = str(fp).rsplit("/", maxsplit=1)[1]
+        utils.mkdir_p(fp)
+
+        conf = W2VecMeta(
+            name=name,
+            lang=self._parser_conf.lang,
+            parser_conf=self._parser_conf,
+            size=self._size,
+            window=self._window,
+            min_count=self._min_count,
+            epoch=self._epoch,
+        )
+        self.model.save(f"{fp}/{name}.bin")
+        self.model.wv.save(f"{fp}/{name}.kv")
+        with open(f"{fp}/{name}.json", "w") as f:
+            f.write(conf.json())
+
+    @classmethod
+    def load(cls, fp: Union[str, os.PathLike], keyed_vectors=False) -> "Word2VecHelper":
+
+        name = str(fp).rsplit("/", maxsplit=1)[1]
+        if keyed_vectors:
+            model = KeyedVectors.load(f"{fp}/{name}.kv")
+        else:
+            model = Word2Vec.load(f"{fp}/{name}.bin")
+        with open(f"{fp}/{name}.json", "r") as f:
+            jmeta = json.loads(f.read())
+            meta = W2VecMeta(**jmeta)
+        phrases = None
+        if meta.phrases_model_path:
+            phrases = PhrasesModel.load(meta.phrases_model_path)
+        obj = cls(
+            parser_conf=meta.parser_conf,
+            phrases_model=phrases,
+            size=meta.size,
+            window=meta.window,
+            min_count=meta.min_count,
+            model=model,
+            using_kv=keyed_vectors,
+        )
+        return obj

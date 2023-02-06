@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 
 def pkg_route() -> str:
     """
@@ -9,3 +11,10 @@ def pkg_route() -> str:
     """
     here = os.path.abspath(os.path.dirname(__file__))
     return here
+
+
+def mkdir_p(fp):
+    """Make the fullpath
+    similar to mkdir -p in unix systems.
+    """
+    Path(fp).mkdir(parents=True, exist_ok=True)
