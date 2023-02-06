@@ -3,7 +3,7 @@ import tempfile
 from gensim.models import KeyedVectors, Word2Vec
 from gensim.models.phrases import FrozenPhrases
 
-from datawords import constants, parsers, utils
+from datawords import parsers
 from datawords.models2 import PhrasesModel, Word2VecHelper
 
 
@@ -36,8 +36,6 @@ def test_models2_word2vec():
     # model.fit(texts)
     wv = Word2VecHelper(parser_conf)
     wv.fit(texts)
-    
-
     with tempfile.TemporaryDirectory() as tmpdir:
         fp = f"{tmpdir}/tests"
         wv.save(fp)
