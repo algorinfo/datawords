@@ -185,10 +185,10 @@ class Word2VecHelper:
         )
         self.model = model
 
-    def parse(self, sentence: str):
+    def parse(self, sentence: str) -> List[str]:
         return self._parser.parse(sentence)
 
-    def encode(self, sentence: str):
+    def encode(self, sentence: str) -> np.ndarray:
         """
         gets a sentence in plain text and encode it as vector
         """
@@ -196,7 +196,7 @@ class Word2VecHelper:
         v = self.vectorize(words)
         return v
 
-    def vectorize(self, sentence: List[str]):
+    def vectorize(self, sentence: List[str]) -> np.ndarray:
         """Get a vector from a list of words
         if a sentence has words that don't match in the word2vec model,
         then it fills with zeros
