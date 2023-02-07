@@ -26,3 +26,7 @@ build:
 
 publish: 
 	echo "Not implemented"
+
+.PHONY: docs-serve
+docs-serve:
+	hatch run sphinx-autobuild docs/source docs/build/html --port 9292 --watch ./

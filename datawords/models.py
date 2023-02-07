@@ -1,10 +1,10 @@
 import json
 import os
-from typing import Any, Iterable, List, Optional, Set, Union
+from typing import Iterable, List, Optional, Union
 
 import numpy as np
 from gensim.models import KeyedVectors, Word2Vec
-from gensim.models.phrases import ENGLISH_CONNECTOR_WORDS, FrozenPhrases, Phrases
+from gensim.models.phrases import FrozenPhrases, Phrases
 from pydantic import BaseModel
 
 from datawords import constants, parsers, utils
@@ -14,9 +14,10 @@ class PhrasesModelMeta(BaseModel):
     name: str
     lang: str
     parser_conf: parsers.ParserConf
-    min_count: int = 1
-    threshold: int = 1
-    version = utils.get_version()
+    min_count: Optional[float] = None
+    threshold: Optional[float] = None
+    max_vocab_size: Optional[int] = None
+    version: str = utils.get_version()
 
 
 class W2VecMeta(BaseModel):
@@ -28,22 +29,53 @@ class W2VecMeta(BaseModel):
     size: int = 100
     window: int = 5
     min_count: int = 1
-    version = utils.get_version()
+    version: str = utils.get_version()
 
 
 class PhrasesModel:
+    """
+    A wrapper around `Gensim Phrases https://radimrehurek.com/gensim/models/phrases.html`_
+    """
+
     def __init__(
         self,
         parser_conf: parsers.ParserConf,
-        min_count=1,
-        threshold=1,
+        min_count: Optional[float] = None,
+        threshold: Optional[float] = None,
+        max_vocab_size: Optional[int] = None,
         connector_words=None,
-        model=None,
+        model=None
+            
     ):
+        """
+        A wrapper around `Gensim Phrases https://radimrehurek.com/gensim/models/phrases.html`_
+
+        :param parser_conf: configuration of the parser
+        :type parser_conf: parsers.ParserConf
+        :param min_count: Ignore all words and bigrams with total collected count
+        lower than this value.
+        :type min_count: Optional[float]
+        :param threshold: Represent a score threshold for forming the phrases
+        (higher means fewer phrases). A phrase of words a followed by b is
+        accepted if the score of the phrase is greater than threshold. Heavily
+        depends on concrete scoring-function, see the scoring parameter.
+        :param max_vocab_size: Maximum size (number of tokens) of the vocabulary.
+        Used to control pruning of less common words, to keep memory under control.
+        The default of 40M needs about 3.6GB of RAM. Increase/decrease max_vocab_size
+        depending on how much available memory you have.
+        :type max_vocab_size: Optional[int] int
+        :param connector_words: Set of words that may be included within a phrase,
+        without affecting its scoring. If any is provided it will use the
+        lang value from the parser_conf. By default datawords include CONNECTOR_WORDS
+        for English, Portugues an Spanish.
+        :type connector_words: Frozenset[str]
+
+        """
 
         self._parser_conf = parser_conf
         self._min_count = min_count
         self._threshold = threshold
+        self._max_vocab_size = max_vocab_size
         self._connector_words = (
             connector_words or constants.CONNECTOR_WORDS[parser_conf.lang]
         )
@@ -71,6 +103,12 @@ class PhrasesModel:
         )
 
     def fit(self, X: Iterable):
+        """
+        This will train the phrase model. It needs an iterable.
+
+        :param X: An iterable which returns plain texts.
+        :type X: Iterable
+        """
         sentences = parsers.SentencesIterator(X, parser=self._parser)
         _model = Phrases(
             sentences,
@@ -80,18 +118,41 @@ class PhrasesModel:
         )
         self._model = _model.freeze()
 
-    def transform(self, X: Iterable):
+    def transform(self, X: Iterable) -> List[List[str]]:
+        """
+        Trasform a list of texts.
+
+        :param X: an iterable.
+        :type X: Iterable
+
+        :return: A list of phrases.
+        :rtype: List[List[str]]
+        """
         results = []
         for txt in X:
             r = self._model[txt.split()]
             results.append(r)
         return results
 
-    def parse(self, txt: str):
+    def parse(self, txt: str) -> List[str]:
+        """
+        It will parse only one text.
+        :param txt: str
+        :return: a list of words
+        :rtype: List[str]
+        """
         r = self._model[txt.split()]
         return r
 
     def save(self, fp: Union[str, os.PathLike]):
+        """
+        Save phrase model to a folder.
+
+        :param fp: The path to the folder. Each model is stored in a folder.
+        The path should be to that folder.
+        :type fp: Union[str, os.PathLike]
+        """
+
         name = str(fp).rsplit("/", maxsplit=1)[1]
         utils.mkdir_p(fp)
 
@@ -108,6 +169,15 @@ class PhrasesModel:
 
     @classmethod
     def load(cls, fp: Union[str, os.PathLike]) -> "PhrasesModel":
+        """loads the TextIndex model.
+
+        :param fp: The path to the index. Each model is stored in a folder.
+        The path should be to that folder.
+        :type fp: Union[str, os.PathLike]
+        :return: PhrasesModel loaded.
+        :rtype: PhrasesModel
+        """
+
         name = str(fp).rsplit("/", maxsplit=1)[1]
         with open(f"{fp}/{name}.json", "r") as f:
             jmeta = json.loads(f.read())
@@ -136,6 +206,29 @@ class Word2VecHelper:
         using_kv=False,
         loaded_from=None,
     ):
+        """
+        A wrapper around `Gensim Phrases https://radimrehurek.com/gensim/models/phrases.html`_
+
+        :param parser_conf: configuration of the parser
+        :type parser_conf: parsers.ParserConf
+        :param min_count: Ignore all words and bigrams with total collected count
+        lower than this value.
+        :type min_count: Optional[float]
+        :param threshold: Represent a score threshold for forming the phrases
+        (higher means fewer phrases). A phrase of words a followed by b is
+        accepted if the score of the phrase is greater than threshold. Heavily
+        depends on concrete scoring-function, see the scoring parameter.
+        :param max_vocab_size: Maximum size (number of tokens) of the vocabulary.
+        Used to control pruning of less common words, to keep memory under control.
+        The default of 40M needs about 3.6GB of RAM. Increase/decrease max_vocab_size
+        depending on how much available memory you have.
+        :type max_vocab_size: Optional[int] int
+        :param connector_words: Set of words that may be included within a phrase,
+        without affecting its scoring. If any is provided it will use the
+        lang value from the parser_conf. By default datawords include CONNECTOR_WORDS
+        for English, Portugues an Spanish.
+        :type connector_words: Frozenset[str]
+        """
 
         self._parser_conf = parser_conf
         self._stopw = self._load_stopw(parser_conf.lang, self._parser_conf.stopw_path)
@@ -175,6 +268,13 @@ class Word2VecHelper:
         return parsers.load_stop2(lang, models_path=models_path)
 
     def fit(self, X: Iterable):
+        """
+        This will train the model. It needs an iterable.
+
+        :param X: An iterable which returns plain texts.
+        :type X: Iterable
+        """
+
         sentences = parsers.SentencesIterator(X, parser=self._parser)
         model = Word2Vec(
             sentences=sentences,
@@ -186,6 +286,12 @@ class Word2VecHelper:
         self.model = model
 
     def parse(self, sentence: str) -> List[str]:
+        """
+        It will parse only one text.
+        :param txt: str
+        :return: a list of words
+        :rtype: List[str]
+        """
         return self._parser.parse(sentence)
 
     def encode(self, sentence: str) -> np.ndarray:
@@ -232,7 +338,6 @@ class Word2VecHelper:
 
     @classmethod
     def load(cls, fp: Union[str, os.PathLike], keyed_vectors=False) -> "Word2VecHelper":
-
         name = str(fp).rsplit("/", maxsplit=1)[1]
         if keyed_vectors:
             model = KeyedVectors.load(f"{fp}/{name}.kv")
