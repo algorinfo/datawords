@@ -13,6 +13,15 @@ def pkg_route() -> str:
     return here
 
 
+def get_version() -> str:
+    # fp = pkg_route()
+    # with open(f"{fp}/__about__.py", "r") as f:
+    #     f.read()
+    from datawords.__about__ import __version__
+
+    return __version__
+
+
 def mkdir_p(fp):
     """Make the fullpath
     similar to mkdir -p in unix systems.

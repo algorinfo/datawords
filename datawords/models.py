@@ -16,6 +16,7 @@ class PhrasesModelMeta(BaseModel):
     parser_conf: parsers.ParserConf
     min_count: int = 1
     threshold: int = 1
+    version = utils.get_version()
 
 
 class W2VecMeta(BaseModel):
@@ -27,6 +28,7 @@ class W2VecMeta(BaseModel):
     size: int = 100
     window: int = 5
     min_count: int = 1
+    version = utils.get_version()
 
 
 class PhrasesModel:
@@ -125,13 +127,14 @@ class Word2VecHelper:
         self,
         parser_conf: parsers.ParserConf,
         phrases_model=None,
-        size=100,
-        window=5,
-        min_count=1,
-        workers=1,
-        epoch=5,
+        size: int = 100,
+        window: int = 5,
+        min_count: int = 1,
+        workers: int = 1,
+        epoch: int = 5,
         model: Word2Vec = None,
         using_kv=False,
+        loaded_from=None,
     ):
 
         self._parser_conf = parser_conf
@@ -147,6 +150,11 @@ class Word2VecHelper:
         self._parser = self._parser_factory()
         self.model: Union[Word2Vec, KeyedVectors] = model
         self._using_kv = using_kv
+        self.loaded_from = loaded_from
+
+    @property
+    def vector_size(self) -> int:
+        return self._size
 
     @property
     def wv(self) -> Union[Word2Vec, KeyedVectors]:
@@ -196,7 +204,7 @@ class Word2VecHelper:
         vectors = []
         for word in sentence:
             try:
-                _vect = self.model[word]
+                _vect = self.model.wv[word]
                 vectors.append(_vect)
             except KeyError:
                 pass
@@ -207,7 +215,6 @@ class Word2VecHelper:
     def save(self, fp: Union[str, os.PathLike]):
         name = str(fp).rsplit("/", maxsplit=1)[1]
         utils.mkdir_p(fp)
-
         conf = W2VecMeta(
             name=name,
             lang=self._parser_conf.lang,
@@ -217,6 +224,7 @@ class Word2VecHelper:
             min_count=self._min_count,
             epoch=self._epoch,
         )
+
         self.model.save(f"{fp}/{name}.bin")
         self.model.wv.save(f"{fp}/{name}.kv")
         with open(f"{fp}/{name}.json", "w") as f:
@@ -244,5 +252,6 @@ class Word2VecHelper:
             min_count=meta.min_count,
             model=model,
             using_kv=keyed_vectors,
+            loaded_from=str(fp),
         )
         return obj
