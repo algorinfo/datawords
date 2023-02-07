@@ -1,7 +1,7 @@
 from annoy import AnnoyIndex
 
 from datawords import parsers
-from datawords.indexes import WordsIndex
+from datawords.indexes import TextIndex
 from datawords.models import Word2VecHelper
 
 
@@ -26,7 +26,7 @@ def test_indexes_words_index():
     wv.fit(texts)
     # WordsIndex(words_model=wv, id_mapper={})
     ids = list(elements.keys())
-    ix = WordsIndex.build(ids, getter=getter, words_model=wv)
+    ix = TextIndex.build(ids, getter=getter, words_model=wv)
     assert isinstance(
         ix.ix,AnnoyIndex
     )
