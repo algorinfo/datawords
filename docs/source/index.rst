@@ -6,7 +6,7 @@
 Welcome to datawords!
 =====================================
 
-**Datawords** is a library oriented to NLP Task. Usually it's a wrapper around well stablished libraries like Transformers, Spacy and Gensim.
+**Datawords** is a library oriented to NLP tasks. Usually it's a wrapper around well stablished libraries like Transformers, Spacy and Gensim.
 
 
 Datawords let's you:

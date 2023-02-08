@@ -89,7 +89,9 @@ dependencies = [
   "types-emoji",
   "Sphinx~=5.3.0",
   "sphinx-autobuild",
-  "furo", # sphinx theme
+  "sphinx-rtd-theme"
+  # "furo", # sphinx theme
+
 ]
 
 features = [

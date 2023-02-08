@@ -33,10 +33,6 @@ class W2VecMeta(BaseModel):
 
 
 class PhrasesModel:
-    """
-    A wrapper around `Gensim Phrases https://radimrehurek.com/gensim/models/phrases.html`_
-    """
-
     def __init__(
         self,
         parser_conf: parsers.ParserConf,
@@ -44,30 +40,29 @@ class PhrasesModel:
         threshold: Optional[float] = None,
         max_vocab_size: Optional[int] = None,
         connector_words=None,
-        model=None
-            
+        model=None,
     ):
         """
-        A wrapper around `Gensim Phrases https://radimrehurek.com/gensim/models/phrases.html`_
 
         :param parser_conf: configuration of the parser
         :type parser_conf: parsers.ParserConf
         :param min_count: Ignore all words and bigrams with total collected count
-        lower than this value.
+            lower than this value.
         :type min_count: Optional[float]
         :param threshold: Represent a score threshold for forming the phrases
-        (higher means fewer phrases). A phrase of words a followed by b is
-        accepted if the score of the phrase is greater than threshold. Heavily
-        depends on concrete scoring-function, see the scoring parameter.
+            (higher means fewer phrases). A phrase of words a followed by b is
+            accepted if the score of the phrase is greater than threshold. Heavily
+            depends on concrete scoring-function, see the scoring parameter.
         :param max_vocab_size: Maximum size (number of tokens) of the vocabulary.
-        Used to control pruning of less common words, to keep memory under control.
-        The default of 40M needs about 3.6GB of RAM. Increase/decrease max_vocab_size
-        depending on how much available memory you have.
+            Used to control pruning of less common words, to keep memory under
+            control. The default of 40M needs about 3.6GB of RAM.
+            Increase/decrease max_vocab_size depending on how much available
+            memory you have.
         :type max_vocab_size: Optional[int] int
         :param connector_words: Set of words that may be included within a phrase,
-        without affecting its scoring. If any is provided it will use the
-        lang value from the parser_conf. By default datawords include CONNECTOR_WORDS
-        for English, Portugues an Spanish.
+             without affecting its scoring. If any is provided it will use the
+             lang value from the parser_conf. By default datawords
+             include CONNECTOR_WORDS for English, Portugues an Spanish.
         :type connector_words: Frozenset[str]
 
         """
@@ -149,7 +144,7 @@ class PhrasesModel:
         Save phrase model to a folder.
 
         :param fp: The path to the folder. Each model is stored in a folder.
-        The path should be to that folder.
+            The path should be to that folder.
         :type fp: Union[str, os.PathLike]
         """
 
@@ -172,7 +167,7 @@ class PhrasesModel:
         """loads the TextIndex model.
 
         :param fp: The path to the index. Each model is stored in a folder.
-        The path should be to that folder.
+             The path should be to that folder.
         :type fp: Union[str, os.PathLike]
         :return: PhrasesModel loaded.
         :rtype: PhrasesModel
@@ -207,27 +202,30 @@ class Word2VecHelper:
         loaded_from=None,
     ):
         """
-        A wrapper around `Gensim Phrases https://radimrehurek.com/gensim/models/phrases.html`_
 
         :param parser_conf: configuration of the parser
         :type parser_conf: parsers.ParserConf
-        :param min_count: Ignore all words and bigrams with total collected count
-        lower than this value.
+        :param min_count: Ignore all words and bigrams with total collected
+            count lower than this value.
         :type min_count: Optional[float]
         :param threshold: Represent a score threshold for forming the phrases
-        (higher means fewer phrases). A phrase of words a followed by b is
-        accepted if the score of the phrase is greater than threshold. Heavily
-        depends on concrete scoring-function, see the scoring parameter.
-        :param max_vocab_size: Maximum size (number of tokens) of the vocabulary.
-        Used to control pruning of less common words, to keep memory under control.
-        The default of 40M needs about 3.6GB of RAM. Increase/decrease max_vocab_size
-        depending on how much available memory you have.
+            (higher means fewer phrases). A phrase of words a followed by b is
+            accepted if the score of the phrase is greater than threshold.
+            Heavily depends on concrete scoring-function, see the scoring
+            parameter.
+        :param max_vocab_size: Maximum size (number of tokens) of the
+            vocabulary. Used to control pruning of less common words,
+            to keep memory under control. The default of 40M needs
+            about 3.6GB of RAM. Increase/decrease max_vocab_size
+            depending on how much available memory you have.
         :type max_vocab_size: Optional[int] int
-        :param connector_words: Set of words that may be included within a phrase,
-        without affecting its scoring. If any is provided it will use the
-        lang value from the parser_conf. By default datawords include CONNECTOR_WORDS
-        for English, Portugues an Spanish.
+        :param connector_words: Set of words that may be included within
+           a phrase, without affecting its scoring. If any is provided it
+           will use the lang value from the parser_conf. By default
+           datawords include CONNECTOR_WORDS for English, Portugues
+           an Spanish.
         :type connector_words: Frozenset[str]
+
         """
 
         self._parser_conf = parser_conf

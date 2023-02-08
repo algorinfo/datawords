@@ -29,7 +29,6 @@ class TextIndex:
         ix: AnnoyIndex = None,
     ):
         """
-        It's a wrapper around `Spotify's AnnoyIndex https://github.com/spotify/annoy`_
         This Index is opinated, usually AnnoyIndex allows any kind of Vector,
         insted, this index is prepared to accept only texts, parse it and
         perform searchs.
@@ -41,14 +40,14 @@ class TextIndex:
         :param words_model: Words Model to be used for vectorizing texts.
         :type words_model: Word2VecHelper
         :param id_mapper: A dict where keys are the indices stored in Annoy
-        and values are the real indices in the domain which the data belongs to.
+            and values are the real indices in the domain which the data
+            belongs to.
         :type id_mapper: Dict[int, Any]
         :param distance_metric: type of distance to be used: "angular",
-        "euclidean", "manhattan", "hamming", or "dot".
+            "euclidean", "manhattan", "hamming", or "dot".
         :type distance_metric: str
         :param ix: AnnoyIndex object.
         :type ix: AnnoyIndex
-
 
         """
         self.ix: AnnoyIndex = ix
@@ -109,29 +108,39 @@ class TextIndex:
 
         .. code-block:: python
 
+            def getter(id_: str) -> str:
+                return db.get(id_)
+
             ix = TextIndex.build(ids, getter=getter, words_model=wv)
 
 
         Check the test cases for a better example.
 
 
-        :param ids: a list of the original ids. This id's will be mapped with the internal ids used by Annoy.
+        :param ids: a list of the original ids. This id's will be mapped
+            with the internal ids used by Annoy.
         :type ids: List[Any]
-        :param getter: A function which get's an ID and returns a texts to be encoded and indexed.
+        :param getter: A function which get's an ID and returns a texts
+            to be encoded and indexed.
         :type getter: Callable
-        :param words_model_path: A fulpath to the :class:`datawords.words.Word2VecHelper`
-        :param words_model: optionally a :class:`datawords.words.Word2VecHelper` could be provided.
+        :param words_model_path: A fulpath to the
+            :class:`datawords.words.Word2VecHelper`
+        :param words_model: optionally a
+            :class:`datawords.words.Word2VecHelper` could be provided.
         :type words_model: Word2VecHelper
-        :param vector_size: size of the vector to be indexed, it should match with vector_size of the word2vec model.
-        :param distance_metric: type of distance to be used: "angular", "euclidean", "manhattan", "hamming", or "dot".
+        :param vector_size: size of the vector to be indexed, it should
+            match with vector_size of the word2vec model.
+        :param distance_metric: type of distance to be used: "angular",
+            "euclidean", "manhattan", "hamming", or "dot".
         :type distance_metric: str
-        :param ann_trees: builds a forest of n_trees trees. More trees gives higher precision when querying
+        :param ann_trees: builds a forest of n_trees trees. More trees
+            gives higher precision when querying
         :type ann_trees: int
-        :param n_jobs: specifies the number of threads used to build the trees. n_jobs=-1 uses all available CPU cores.
+        :param n_jobs: specifies the number of threads used to build the
+            trees. n_jobs=-1 uses all available CPU cores.
         :type n_jobs: int
         :return: TextIndex trained.
         :rtype: TextIndex
-
 
         """
         if not words_model:
@@ -195,7 +204,7 @@ class TextIndex:
         Save index to a folder.
 
         :param fp: The path to the index. Each model is stored in a folder.
-        The path should be to that folder.
+            The path should be to that folder.
         :type fp: Union[str, os.PathLike]
         """
         name = str(fp).rsplit("/", maxsplit=1)[1]
