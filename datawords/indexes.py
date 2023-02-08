@@ -6,7 +6,7 @@ import numpy as np
 from annoy import AnnoyIndex
 from pydantic import BaseModel
 
-from datawords import utils
+from datawords import _utils
 from datawords.models import Word2VecHelper
 
 
@@ -16,7 +16,7 @@ class TextIndexMeta(BaseModel):
     vector_size: int = 100
     ann_trees: int = 10
     distance_metric: str = "angular"
-    version: str = utils.get_version()
+    version: str = _utils.get_version()
 
 
 class TextIndex:
@@ -208,7 +208,7 @@ class TextIndex:
         :type fp: Union[str, os.PathLike]
         """
         name = str(fp).rsplit("/", maxsplit=1)[1]
-        utils.mkdir_p(fp)
+        _utils.mkdir_p(fp)
         self.ix.save(f"{fp}/{name}.ann")
         conf = TextIndexMeta(
             name=name,

@@ -7,17 +7,17 @@ from gensim.models import KeyedVectors, Word2Vec
 from gensim.models.phrases import FrozenPhrases, Phrases
 from pydantic import BaseModel
 
-from datawords import constants, parsers, utils
+from datawords import constants, parsers, _utils
 
 
 class PhrasesModelMeta(BaseModel):
     name: str
     lang: str
     parser_conf: parsers.ParserConf
-    min_count: Optional[float] = None
+    min_count: float = 1.
     threshold: Optional[float] = None
     max_vocab_size: Optional[int] = None
-    version: str = utils.get_version()
+    version: str = _utils.get_version()
 
 
 class W2VecMeta(BaseModel):
@@ -29,14 +29,14 @@ class W2VecMeta(BaseModel):
     size: int = 100
     window: int = 5
     min_count: int = 1
-    version: str = utils.get_version()
+    version: str = _utils.get_version()
 
 
 class PhrasesModel:
     def __init__(
         self,
         parser_conf: parsers.ParserConf,
-        min_count: Optional[float] = None,
+        min_count: float = 1.,
         threshold: Optional[float] = None,
         max_vocab_size: Optional[int] = None,
         connector_words=None,
@@ -48,7 +48,7 @@ class PhrasesModel:
         :type parser_conf: parsers.ParserConf
         :param min_count: Ignore all words and bigrams with total collected count
             lower than this value.
-        :type min_count: Optional[float]
+        :type min_count: float
         :param threshold: Represent a score threshold for forming the phrases
             (higher means fewer phrases). A phrase of words a followed by b is
             accepted if the score of the phrase is greater than threshold. Heavily
@@ -149,7 +149,7 @@ class PhrasesModel:
         """
 
         name = str(fp).rsplit("/", maxsplit=1)[1]
-        utils.mkdir_p(fp)
+        _utils.mkdir_p(fp)
 
         conf = PhrasesModelMeta(
             name=name,
@@ -318,7 +318,7 @@ class Word2VecHelper:
 
     def save(self, fp: Union[str, os.PathLike]):
         name = str(fp).rsplit("/", maxsplit=1)[1]
-        utils.mkdir_p(fp)
+        _utils.mkdir_p(fp)
         conf = W2VecMeta(
             name=name,
             lang=self._parser_conf.lang,

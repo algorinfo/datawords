@@ -7,7 +7,7 @@ import emoji
 import unidecode
 from pydantic import BaseModel
 
-from datawords import utils
+from datawords import _utils
 
 
 class ParserProto(ABC):
@@ -59,7 +59,7 @@ def load_stop2(lang="en", *, models_path=None, strip_accents=True) -> Set[str]:
     if models_path:
         fp = f"{models_path}/stop_{lang}.txt"
     else:
-        fp = f"{utils.pkg_route()}/files/stop_{lang}.txt"
+        fp = f"{_utils.pkg_route()}/files/stop_{lang}.txt"
 
     with open(fp, "r") as f:
         stopwords = f.readlines()
