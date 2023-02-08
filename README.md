@@ -2,6 +2,7 @@
 
 [![PyPI - Version](https://img.shields.io/pypi/v/datawords.svg)](https://pypi.org/project/datawords)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/datawords.svg)](https://pypi.org/project/datawords)
+[![readthedocs](https://readthedocs.org/projects/datawords/badge/?version=latest)](https://datawords.readthedocs.io/en/latest/)
 
 -----
 
