@@ -1,7 +1,7 @@
 from annoy import AnnoyIndex
 
 from datawords import parsers
-from datawords.indexes import TextIndex
+from datawords.indexes import LiteDoc, SQLiteIndex, TextIndex
 from datawords.models import Word2VecHelper
 
 
@@ -27,6 +27,16 @@ def test_indexes_words_index():
     # WordsIndex(words_model=wv, id_mapper={})
     ids = list(elements.keys())
     ix = TextIndex.build(ids, getter=getter, words_model=wv)
-    assert isinstance(
-        ix.ix,AnnoyIndex
-    )
+    assert isinstance(ix.ix, AnnoyIndex)
+
+
+def test_indexes_sqlite_search():
+    texts = list(open_texts())
+    stopw = parsers.load_stop2()
+    docs = [LiteDoc(id=ix, text=t) for ix, t in enumerate(texts[:5])]
+    ix = SQLiteIndex(stopwords=stopw)
+    ix.add_batch(docs)
+    total = ix.total
+    res = ix.search("coco", limit=1)
+    assert isinstance(res[0], LiteDoc)
+    assert total == 5

@@ -338,7 +338,7 @@ class Word2VecHelper:
     def load(cls, fp: Union[str, os.PathLike], keyed_vectors=False) -> "Word2VecHelper":
         name = str(fp).rsplit("/", maxsplit=1)[1]
         if keyed_vectors:
-            model = KeyedVectors.load(f"{fp}/{name}.kv")
+            model = KeyedVectors.load(f"{fp}/{name}.kv", mmap="r")
         else:
             model = Word2Vec.load(f"{fp}/{name}.bin")
         with open(f"{fp}/{name}.json", "r") as f:

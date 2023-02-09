@@ -1,13 +1,19 @@
 import json
 import os
+import sqlite3
 from typing import Any, Callable, Dict, List, Union
 
 import numpy as np
 from annoy import AnnoyIndex
 from pydantic import BaseModel
 
-from datawords import _utils
+from datawords import _utils, parsers
 from datawords.models import Word2VecHelper
+
+
+class LiteDoc(BaseModel):
+    id: str
+    text: str
 
 
 class TextIndexMeta(BaseModel):
@@ -166,7 +172,7 @@ class TextIndex:
     def load(
         cls, fp: Union[str, os.PathLike], words_model: Word2VecHelper = None
     ) -> "TextIndex":
-        """ loads the TextIndex model.
+        """loads the TextIndex model.
 
         :param fp: The path to the index. Each model is stored in a folder.
         The path should be to that folder.
@@ -223,3 +229,117 @@ class TextIndex:
 
         with open(f"{fp}/{name}.map.json", "w") as f:
             f.write(json.dumps(self.id_mapper))
+
+
+class SQLiteIndex:
+    def __init__(self, sqlite=":memory:", stopwords=set()):
+        self.db = sqlite3.connect(sqlite)
+        self._create_tables()
+        self._stopw = stopwords
+
+    def _create_tables(self):
+        cur = self.db.cursor()
+        cur.execute(
+            'create virtual table search_docs using fts5(id, text, tokenize="ascii");'
+        )
+        cur.execute(
+            """CREATE TABLE search_index
+        (id INTEGER PRIMARY KEY,doc_id TEXT NOT NULL UNIQUE);"""
+        )
+        cur.close()
+
+    def _parse(self, txt) -> List[str]:
+        tokens = parsers.doc_parser(
+            txt,
+            self._stopw,
+            emo_codes=False,
+            strip_accents=True,
+            lower=True,
+            numbers=True,
+            parse_urls=False,
+        )
+        return tokens
+
+    def _insert(self, cur, doc: LiteDoc):
+        tokens = self._parse(doc.text)
+        words = " ".join(tokens)
+        cur.execute(
+            "insert into search_index (doc_id) values (?);",
+            (doc.id,),
+        )
+        cur.execute(
+            "insert into search_docs (id, text) values (?, ?);",
+            (
+                doc.id,
+                words,
+            ),
+        )
+
+    def add(self, doc: LiteDoc) -> bool:
+        cur = self.db.cursor()
+        added = False
+        try:
+            self._insert(cur, doc)
+
+            self.db.commit()
+            added = True
+        except sqlite3.IntegrityError:
+            pass
+        except sqlite3.OperationalError:
+            pass
+
+        cur.close()
+        return added
+
+    def add_batch(self, docs: List[LiteDoc]) -> List[bool]:
+        cur = self.db.cursor()
+        tracking = []
+        for doc in docs:
+            try:
+                self._insert(cur, doc)
+                tracking.append(True)
+            except sqlite3.IntegrityError:
+                tracking.append(False)
+        self.db.commit()
+        cur.close()
+        return tracking
+
+    def _list(self, cur, limit=10, offset=0, table="search_index"):
+        result = cur.execute(f"select * from {table} LIMIT {offset}, {limit};")
+        return result
+
+    def list_docs(self, limit=10, offset=0) -> List[LiteDoc]:
+        cur = self.db.cursor()
+        rows = self._list(cur, limit=limit, offset=offset, table="search_docs")
+        docs = [LiteDoc(id=r[0], text=r[1]) for r in rows]
+        cur.close()
+        return docs
+
+    def list_ids(self, limit=10, offset=0) -> List[str]:
+        cur = self.db.cursor()
+        rows = self._list(cur, limit=limit, offset=offset, table="search_index")
+        ids = [r[1] for r in rows]
+        cur.close()
+        return ids
+
+    @property
+    def total(self) -> int:
+        cur = self.db.cursor()
+        res = cur.execute("select count(*) from search_index;").fetchone()
+        cur.close()
+        return res[0]
+
+    def search(self, text: str, limit: int = 1):
+        tokens = self._parse(text)
+        words = " ".join(tokens)
+        cur = self.db.cursor()
+        try:
+            result = cur.execute(
+                f"""select * from search_docs where text MATCH '"{words}" *'
+                                    limit {limit}"""
+            ).fetchall()
+
+        except sqlite3.OperationalError:
+            result = []
+        cur.close()
+        return [LiteDoc(id=r[0], text=r[1]) for r in result]

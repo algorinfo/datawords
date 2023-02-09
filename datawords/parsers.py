@@ -1,19 +1,26 @@
 import re
 import warnings
-from typing import Any, FrozenSet, Iterable, Optional, Set, List
 from abc import ABC, abstractmethod
+from typing import Any, Iterable, List, Optional, Set
 
 import emoji
 import unidecode
 from pydantic import BaseModel
 
-from datawords import _utils
+from datawords import _utils, constants
 
 
 class ParserProto(ABC):
     @abstractmethod
     def parse(self, txt: str) -> List[str]:
         pass
+
+
+class Entity(BaseModel):
+    txt: str
+    start_char: int
+    end_char: int
+    label: str
 
 
 class ParserConf(BaseModel):
@@ -25,9 +32,6 @@ class ParserConf(BaseModel):
     stopw_path: Optional[str] = None
     use_stemmer: bool = False
     phrases_model_path: Optional[str] = None
-
-
-WORDS_REGEX = r"[a-zA-Z]+"
 
 
 def load_stop(base_path, lang="en", strip_accents=True) -> Set[str]:
@@ -53,8 +57,6 @@ def load_stop(base_path, lang="en", strip_accents=True) -> Set[str]:
 def load_stop2(lang="en", *, models_path=None, strip_accents=True) -> Set[str]:
     """
     Open a list of stop words.
-    The final path will be:
-         models/stop_es.txt
     """
     if models_path:
         fp = f"{models_path}/stop_{lang}.txt"
@@ -74,50 +76,95 @@ def load_stop2(lang="en", *, models_path=None, strip_accents=True) -> Set[str]:
     return stop
 
 
+def apply_regex(reg_expr, word) -> str:
+    _found = re.findall(reg_expr, word)
+    if len(_found) > 0:
+        if len(_found) > 1:
+            word = "".join(_found)
+        else:
+            word = _found[0]
+        return word
+    return ""
+
+
+def norm_token(tkn: str) -> str:
+    final = unidecode.unidecode(tkn.lower().strip())
+    # final = apply_regex(r"[\w]", tkn)
+    final = apply_regex(constants.ALPHANUMERIC_REGEX, tkn)
+    return final
+
+
 def doc_parser(
     txt: str,
     stop_words: Set[str],
     stemmer: Optional[Any] = None,
     emo_codes=False,
-    strip_accents=False,
+    strip_accents=True,
     lower=True,
-    numbers=True,
+    numbers=False,
+    parse_urls=False,
 ) -> List[str]:
     """
     Get a string text an return a list of words
     # from nltk.stem import SnowballStemmer
     """
-    text = re.sub(r"<br>+", "", txt)
+    # text = re.sub(r"<br>+", "", txt)
+    # text = txt
+    text = re.sub(constants.URL_REGEX, "", txt, flags=re.MULTILINE)
+
+    if strip_accents:
+        text = unidecode.unidecode(text)
+    if lower:
+        text = text.lower()
+
     _doc = []
+
     for tkn in text.split():
         # ("<[^>]*>", "")
-        word = None
-        _matched = re.search(r"\w+", tkn)
-        if _matched:
-            word = _matched.group()
-
-        if word:
-            word_norm = unidecode.unidecode(word.strip()).lower()
-            if not numbers:
-                _letters = re.findall(WORDS_REGEX, word)
-                word = _letters[0]
-            if lower:
-                word = word.lower()
-            final_word = word
-            if strip_accents:
-                final_word = unidecode.unidecode(word.strip())
-
-            if word_norm not in stop_words:
+        word = tkn
+        norm = norm_token(tkn)
+        if norm and norm not in stop_words:
+            if numbers:
+                regex_parser = constants.ALPHANUMERIC_ACCENT_REGEX
+            else:
+                regex_parser = constants.WORDS_ACCENT_REGEX
+            word = apply_regex(regex_parser, word)
+            if word:
                 if stemmer:
-                    final_word = stemmer.stem(final_word)
-                _doc.append(final_word)
+                    word = stemmer.stem(word)
+                _doc.append(word)
 
     if emo_codes:
         _codes = emoji.demojize(text)
         _emojis = re.findall(r"\:[a-zA-Z_-]+\:", _codes)
         _doc.extend(_emojis)
 
+    if parse_urls:
+        urls = re.findall(constants.URL_REGEX, txt)
+        _doc.extend(urls)
+
     return _doc
+
+
+# def generate_ngrams(s: str, n: int = 2, numbers=True, lower=True, sep=" ") -> List[str]:
+def generate_ngrams(tokens: List[str], n: int = 2, sep=" ") -> List[str]:
+    """
+    Generate n grams from a string `s`.
+
+    :param tokens: a list of words already parsed.
+    :type tokens: List[str]
+    :param n: how many ngrams generate. 2 by default.
+    :type n: int
+    :param sep: Field to use as seperator between words.
+    :type sep: str
+    :return: a list of ngrams
+    :rtype: List[str]
+
+    """
+    # Use the zip function to help us generate n-grams
+    # Concatentate the tokens into ngrams and return
+    ngrams = zip(*[tokens[i:] for i in range(n)])
+    return [f"{sep}".join(ngram) for ngram in ngrams]
 
 
 class SentencesParser(ParserProto):
