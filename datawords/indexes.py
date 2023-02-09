@@ -12,6 +12,10 @@ from datawords.models import Word2VecHelper
 
 
 class LiteDoc(BaseModel):
+    """
+    Used by :class:`SQLiteIndex`
+    """
+
     id: str
     text: str
 
@@ -233,6 +237,17 @@ class TextIndex:
 
 class SQLiteIndex:
     def __init__(self, sqlite=":memory:", stopwords=set()):
+        """
+        SQLiteIndex allows to store documents and search over them.
+        It uses the fts5 module from sqlite. Also it parse the text
+        in an opinated way.
+
+        :param sqlite: path where database will be stored.
+            By default it's saved on memory
+        :type sqlite: str
+        :param stopwords: list of stop words to be used by the parsed.
+        :type stopwords: Set[str]
+        """
         self.db = sqlite3.connect(sqlite)
         self._create_tables()
         self._stopw = stopwords
@@ -276,6 +291,15 @@ class SQLiteIndex:
         )
 
     def add(self, doc: LiteDoc) -> bool:
+        """
+        Adds a document of type :class:`LiteDoc` into the index.
+        If the document already exist, then it will not be stored.
+
+        :param doc: A document
+        :type doc: LiteDoc
+        :return: True if it was stored or false if not.
+        :rtype: bool
+        """
         cur = self.db.cursor()
         added = False
         try:
@@ -292,6 +316,14 @@ class SQLiteIndex:
         return added
 
     def add_batch(self, docs: List[LiteDoc]) -> List[bool]:
+        """
+        Add documents in batch.
+
+        :param docs: A list of documents
+        :type docs: List[LiteDoc]
+        :return: True if it was stored or false if not.
+        :rtype: List[bool]
+        """
         cur = self.db.cursor()
         tracking = []
         for doc in docs:
@@ -316,6 +348,9 @@ class SQLiteIndex:
         return docs
 
     def list_ids(self, limit=10, offset=0) -> List[str]:
+        """
+        It lists the ids of the document stored.
+        """
         cur = self.db.cursor()
         rows = self._list(cur, limit=limit, offset=offset, table="search_index")
         ids = [r[1] for r in rows]
@@ -324,12 +359,23 @@ class SQLiteIndex:
 
     @property
     def total(self) -> int:
+        """ Returns the total of documents stored in the index. """
         cur = self.db.cursor()
         res = cur.execute("select count(*) from search_index;").fetchone()
         cur.close()
         return res[0]
 
-    def search(self, text: str, limit: int = 1):
+    def search(self, text: str, limit: int = 1) -> List[LiteDoc]:
+        """
+        Performs a search in the index.
+
+        :param text: text to search.
+        :type text: str
+        :param limit: how many results retrieve.
+        :type limit: int
+        :return: Documents found
+        :rtype: List[LiteDoc]
+        """
         tokens = self._parse(text)
         words = " ".join(tokens)
         cur = self.db.cursor()

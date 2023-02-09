@@ -99,8 +99,25 @@ class PageRankTFIDF:
 # corpus: Union[Generator, List[str]]
 class PageRankAnnoy:
     # pylint: disable=too-many-instance-attributes
-    """It uses Annoy Indexer and PageRank to get the most relevant texts from a corpus
-    where each document should be an string."""
+    """
+    It uses Annoy Indexer and PageRank to rank a list of `documents`,
+    where each document should be an string.
+
+    PageRank is an old known google algorithm, originally used to get the
+    "most important" links from internet.
+
+    In the text world, there are different approachs to achive the same goal.
+    For instance, if two documents share the same words, then they could
+    be considered as nodes connected between.
+
+    Because PageRank is a graph algorithm the idea of nodes
+    and edges is important.
+
+    Other approach is to measure the similarity between
+    two documents (nodes), if they are similar enough (`barrier`),
+    then they are connected. This last method is used here.
+
+    """
 
     def __init__(
         self,
@@ -112,14 +129,21 @@ class PageRankAnnoy:
         tqdm=True,
     ):
         """
+        For `l2_norm` param refer to
         https://machinelearningmastery.com/vector-norms-machine-learning/
-        :param metric_distance: the options are  "angular", "euclidean", "manhattan",
-        "hamming", or "dot".
-            it will be used by Annoy and as measure to calculates distance between texts.
-        :param barrier: It depends on the metric_distance choose, but this param will serve
-        as filter to define if 2 texts are connected as nodes.
-        :param n_tress: trees used by annoy index.
+
+        :param metric_distance: the options are  "angular", "euclidean",
+            "manhattan", "hamming", or "dot". It will be used by Annoy
+             as measure to calculates distance between texts.
+
+        :param l2_norm: True by default, usually is recommend their usage.
+        :param barrier: It depends on the metric_distance choose, but
+            this param will serve as filter to define if 2 texts are
+            connected as nodes.
+        :param n_trees: trees used by annoy index.
         :param n_jobs: using multithreading for the index.
+        :param tqdm: tqdm usage when adj. matrix is calculated.
+
         """
         self.barrier = barrier
         self.metric_distance = metric_distance
@@ -165,6 +189,8 @@ class PageRankAnnoy:
         return scores
 
     def rank(self, index: List[Any], top_n=5):
+        """ given a `index` build a ranking using the scores created
+        by PageRank. """
         ranking = zip(index, self.scores)
         best = sorted(ranking, key=lambda tup: tup[1], reverse=True)[:top_n]
         return best

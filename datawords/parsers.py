@@ -11,6 +11,7 @@ from datawords import _utils, constants
 
 
 class ParserProto(ABC):
+    """ Abstract class that any parser should agree with. """
     @abstractmethod
     def parse(self, txt: str) -> List[str]:
         pass
@@ -24,11 +25,15 @@ class Entity(BaseModel):
 
 
 class ParserConf(BaseModel):
+    """
+    Related to :meth:`doc_parser`
+    """
     lang: str = "en"
     emo_codes: bool = False
     strip_accents: bool = False
     lower: bool = True
     numbers: bool = True
+    parse_urls: bool = False
     stopw_path: Optional[str] = None
     use_stemmer: bool = False
     phrases_model_path: Optional[str] = None
@@ -57,6 +62,10 @@ def load_stop(base_path, lang="en", strip_accents=True) -> Set[str]:
 def load_stop2(lang="en", *, models_path=None, strip_accents=True) -> Set[str]:
     """
     Open a list of stop words.
+
+    If `models_path` is ommited then it will look internally
+    for the list of words. Actually, it supports **en**, **pt** and **es**
+    
     """
     if models_path:
         fp = f"{models_path}/stop_{lang}.txt"
@@ -88,6 +97,10 @@ def apply_regex(reg_expr, word) -> str:
 
 
 def norm_token(tkn: str) -> str:
+    """
+    An opinated token normalizer. It lower any string, strip any accents
+    and keeps letters and number from a token.
+    """
     final = unidecode.unidecode(tkn.lower().strip())
     # final = apply_regex(r"[\w]", tkn)
     final = apply_regex(constants.ALPHANUMERIC_REGEX, tkn)
@@ -105,9 +118,37 @@ def doc_parser(
     parse_urls=False,
 ) -> List[str]:
     """
-    Get a string text an return a list of words
-    # from nltk.stem import SnowballStemmer
+    Get a string text an return a list of words.
+
+    .. note::
+        emo_codes and parse_urls alter the order of the tokens.
+        If they are found, then it will put them at the end of the list.
+
+
+    This function is related to :class:`ParserConf`
+
+    :param txt: text to be parsed.
+    :type txt: str
+    :param stop_words: a list of stop words.
+        It's possible to get a list using :meth:`load_stop2`
+    :type stop_words: Set[str]
+    :param stemmer: optional, a stemmer.
+    :type stemmer: Optional[Any]
+    :param emo_codes: if true, emo_codes will be decoded into text
+    :type emo_codes: bool
+    :param stip_accents: replace accents with the same letter without accent
+    :type strip_accents: bool
+    :param lower: transform text to lower letters.
+    :type lower: bool
+    :param numbers: if True it will keep numbers.
+    :type numbers: bool
+    :param parse_urls: keep urls.
+    :type parse_urls: bool
+    :return: a list of tokens
+    :rtype: List[str]
+
     """
+    # from nltk.stem import SnowballStemmer
     # text = re.sub(r"<br>+", "", txt)
     # text = txt
     text = re.sub(constants.URL_REGEX, "", txt, flags=re.MULTILINE)
