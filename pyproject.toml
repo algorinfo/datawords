@@ -7,7 +7,7 @@ name = "datawords"
 description = 'A library to work with text data'
 readme = "README.md"
 requires-python = ">=3.7"
-license = "MIT"
+license = "MPL-2.0"
 keywords = ["nlp", "datascience", "transformers", "text"]
 authors = [
   { name = "Xavier Petit", email = "nuxion@gmail.com" },
