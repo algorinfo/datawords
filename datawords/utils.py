@@ -82,6 +82,15 @@ def norm_l2_np(vec):
     return vec / np.linalg.norm(vec)
 
 
+def norm_l2_np_with_zeros(vec):
+    """
+    If a vector is all zeros it will avoid the normalization
+    """
+    if not vec.sum() == 0.0:
+        return vec / np.linalg.norm(vec)
+    return vec
+
+
 class WordSearch:
     def __init__(self, sqlite=":memory:", stopwords=set()):
         """
@@ -179,7 +188,7 @@ class WordSearch:
         """
         It's an approximate counter of repeated words in a text.
 
-        It counts how often each word in the corpus appears in a table. 
+        It counts how often each word in the corpus appears in a table.
         Based on the names previously loaded with `get_uniques`
         this method receive a text and counts how often each name appears
         """

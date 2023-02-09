@@ -9,7 +9,9 @@ def open_texts():
     with open("tests/texts.txt", "r") as f:
         texts = f.readlines()
     for t in texts:
-        yield t
+        _t = t.strip()
+        if _t:
+            yield _t
 
 
 def test_indexes_words_index():

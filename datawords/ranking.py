@@ -1,0 +1,182 @@
+# from scipy import sparse
+from typing import Any, List
+
+import numpy as np
+from annoy import AnnoyIndex
+from scipy import sparse
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from sknetwork.ranking import PageRank
+from tqdm import tqdm
+
+from datawords.utils import norm_l2_np_with_zeros
+
+
+def get_adj(edges, size):
+    E = edges
+    # size = max(max(E))+1
+    r = [[0 for i in range(size)] for j in range(size)]
+    for row, col in E:
+        r[row][col] = 1
+    return np.asarray(r)
+
+
+def build_annoy_edges(ix: AnnoyIndex, vectors: np.ndarray, barrier=0.9, tqdm_=True):
+    edges = []
+    if tqdm_:
+        for i in tqdm(range(vectors.shape[0])):
+            for j in range(vectors.shape[0]):
+                if i != j:
+                    dst = ix.get_distance(i, j)
+                    if dst <= barrier:
+                        edges.append((i, j))
+    else:
+        for i in range(vectors.shape[0]):
+            for j in range(vectors.shape[0]):
+                if i != j:
+                    dst = ix.get_distance(i, j)
+                    if dst <= barrier:
+                        edges.append((i, j))
+
+    return edges
+
+
+class PageRankTFIDF:
+    # pylint: disable=too-few-public-methods
+    """PageRank based on TFIDF"""
+
+    def __init__(
+        self, tokenizer, barrier=0.7, min_df=1, max_df=0.9, ngram_range=(1, 1)
+    ):
+        # pylint: disable=too-many-arguments
+        self.tf = TfidfVectorizer(
+            analyzer="word",
+            ngram_range=ngram_range,
+            # stop_words=stopw,
+            tokenizer=tokenizer,
+            min_df=min_df,
+            max_df=max_df,
+        )
+        self.barrier = barrier
+
+    @staticmethod
+    def _compute_tfidf_M(A):
+        M = cosine_similarity(A)
+
+        for i in range(A.shape[0]):
+            for j in range(A.shape[0]):
+                if i == j:
+                    M[i][j] = 0.0
+        return M
+
+    @staticmethod
+    def _build_edges_all(A, barrier=0.7):
+        edges = []
+        M = cosine_similarity(A)
+
+        for i in range(A.shape[0]):
+            for j in range(A.shape[0]):
+                if i != j:
+                    cosine = M[i, j]
+                    if cosine > barrier:
+                        # edges.append((i, j, cosine))
+                        edges.append((i, j))
+
+        return edges
+
+    def fit_transform(self, corpus):
+        """
+        Estimate a pagerank by cosine_similarity
+        """
+        tf_M = self.tf.fit_transform(corpus)
+        sim_M = self._compute_tfidf_M(tf_M)
+        adjacency = sparse.csr_matrix(sim_M)
+        pagerank = PageRank()
+        scores = pagerank.fit_transform(adjacency)
+        return scores
+
+
+# corpus: Union[Generator, List[str]]
+class PageRankAnnoy:
+    # pylint: disable=too-many-instance-attributes
+    """It uses Annoy Indexer and PageRank to get the most relevant texts from a corpus
+    where each document should be an string."""
+
+    def __init__(
+        self,
+        metric_distance="euclidean",
+        l2_norm=True,
+        barrier=0.9,
+        n_trees=10,
+        n_jobs=-1,
+        tqdm=True,
+    ):
+        """
+        https://machinelearningmastery.com/vector-norms-machine-learning/
+        :param metric_distance: the options are  "angular", "euclidean", "manhattan",
+        "hamming", or "dot".
+            it will be used by Annoy and as measure to calculates distance between texts.
+        :param barrier: It depends on the metric_distance choose, but this param will serve
+        as filter to define if 2 texts are connected as nodes.
+        :param n_tress: trees used by annoy index.
+        :param n_jobs: using multithreading for the index.
+        """
+        self.barrier = barrier
+        self.metric_distance = metric_distance
+        self.n_trees = n_trees
+        self.n_jobs = n_jobs
+        self.X = None
+        self.aix = None
+        self._adj = None
+        self._edges = None
+        self._scores = None
+        self._tqdm = tqdm
+        self._l2_norm = l2_norm
+        # self.annoy_ix = AnnoyIndex(vector_size, metric_distance)
+        # self.vectors = None
+
+    @staticmethod
+    def as_ndarray(X: List[np.ndarray]) -> np.ndarray:
+        return np.asarray(X)
+
+    def fit(self, X: np.ndarray):
+        self.X = X
+        if self._l2_norm:
+            self.X = np.apply_along_axis(norm_l2_np_with_zeros, 1, X)
+
+    def transform(self):
+        self.aix = AnnoyIndex(self.X.shape[1], self.metric_distance)
+        for i in range(self.X.shape[0]):
+            self.aix.add_item(i, self.X[i])
+
+        self.aix.build(n_trees=self.n_trees, n_jobs=self.n_jobs)
+        pg = PageRank()
+        self._edges = build_annoy_edges(
+            self.aix, self.X, barrier=self.barrier, tqdm_=self._tqdm
+        )
+        self._adj = get_adj(self._edges, self.X.shape[0])
+
+        self._scores = pg.fit_transform(self._adj)
+        return self._scores
+
+    def fit_transform(self, X: np.ndarray):
+        self.fit(X)
+        scores = self.transform()
+        return scores
+
+    def rank(self, index: List[Any], top_n=5):
+        ranking = zip(index, self.scores)
+        best = sorted(ranking, key=lambda tup: tup[1], reverse=True)[:top_n]
+        return best
+
+    @property
+    def scores(self):
+        return self._scores
+
+    @property
+    def edges(self):
+        return self._edges
+
+    @property
+    def adjacency(self):
+        return self._adj

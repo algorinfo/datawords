@@ -7,14 +7,14 @@ from gensim.models import KeyedVectors, Word2Vec
 from gensim.models.phrases import FrozenPhrases, Phrases
 from pydantic import BaseModel
 
-from datawords import constants, parsers, _utils
+from datawords import _utils, constants, parsers
 
 
 class PhrasesModelMeta(BaseModel):
     name: str
     lang: str
     parser_conf: parsers.ParserConf
-    min_count: float = 1.
+    min_count: float = 1.0
     threshold: Optional[float] = None
     max_vocab_size: Optional[int] = None
     version: str = _utils.get_version()
@@ -36,7 +36,7 @@ class PhrasesModel:
     def __init__(
         self,
         parser_conf: parsers.ParserConf,
-        min_count: float = 1.,
+        min_count: float = 1.0,
         threshold: Optional[float] = None,
         max_vocab_size: Optional[int] = None,
         connector_words=None,
@@ -282,6 +282,22 @@ class Word2VecHelper:
             workers=self._workers,
         )
         self.model = model
+
+    # def transform(self, X: Iterable) -> np.ndarray:
+    #     """
+    #     This will train the model. It needs an iterable.
+
+    #     :param X: An iterable which returns plain texts.
+    #     :type X: Iterable
+    #     """
+
+    #     sentences = parsers.SentencesIterator(X, parser=self._parser)
+    #     vectors = [self.encode(st) for st in sentences]
+    #     return np.asarray(vectors)
+
+    # def fit_transform(self, X: Iterable) -> np.ndarray:
+    #     self.fit(X)
+    #     return self.transform(X)
 
     def parse(self, sentence: str) -> List[str]:
         """
