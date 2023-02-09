@@ -9,6 +9,7 @@ API Reference
    api/models
    api/indexes
    api/ranking
+   api/deepnlp
 
 
 
