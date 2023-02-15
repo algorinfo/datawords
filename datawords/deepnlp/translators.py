@@ -91,6 +91,10 @@ def transform_mp(source, target, *, texts, n_jobs=2, model_path=None):
     mp.set_start_method("spawn", force=True)
     manager = mp.Manager()
     return_list = manager.list()
+    # fixes bug
+    if len(texts) < n_jobs:
+        n_jobs = len(texts)
+
     tns = Translator(source, target, model_path=model_path)
     procs = []
     X = [(ix, x) for ix, x in enumerate(texts)]
