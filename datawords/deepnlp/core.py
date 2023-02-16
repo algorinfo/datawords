@@ -12,6 +12,9 @@ from transformers import (
     pipeline,
 )
 
+def is_cuda_available() -> bool:
+    return torch.cuda.is_available()
+
 
 def norm_l2_torch(vect):
     norm = F.normalize(vect, p=2)
@@ -103,3 +106,5 @@ class Transformer:
 
     def classify(self, texts: List[str], labels: List[str]):
         return self.classifier(texts, labels)
+
+

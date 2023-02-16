@@ -11,8 +11,16 @@ from datawords.constants import ROMANCE_SUPPORT
 
 class Translator:
     ROMANCE_SUPPORT = ROMANCE_SUPPORT
+
     def __init__(
-        self, source, target, *, model_path=None, limit_text=250, max_length=512
+        self,
+        source,
+        target,
+        *,
+        model_path=None,
+        limit_text=250,
+        max_length=512,
+        progress_bar=True,
     ):
         """
         :param source: lang source, it could be any ROMANCE lang, or `en`.
@@ -30,9 +38,10 @@ class Translator:
         self._target = target
         self._limit = limit_text
         self.tokenizer = MarianTokenizer.from_pretrained(
-            fullpath, max_new_tokens=max_length
+            fullpath, model_max_length=max_length, truncation=True
         )
         self.model = MarianMTModel.from_pretrained(fullpath)
+        self._progress_bar = not progress_bar
 
     def flag_text_from_english(self, text: str):
         to = f">>{self._target}<< {text}"
@@ -48,10 +57,7 @@ class Translator:
 
     def transform(self, X: List[str]) -> List[str]:
         translated = []
-        for (
-            ix,
-            txt,
-        ) in tqdm(enumerate(X)):
+        for txt in tqdm(X, disable=self._progress_bar):
             final_txt = txt
             if self._source == "en":
                 final_txt = self.flag_text_from_english(txt)
