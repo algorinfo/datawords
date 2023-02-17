@@ -51,7 +51,7 @@ allow-direct-references = true
 transformers = [
 	"transformers",
 	"sentencepiece",
-  	"torch~=1.13.1",
+  	# "torch~=1.13.1",
 	#"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp37-cp37m-linux_x86_64.whl ; python_version == '3.7'",
 	#"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp38-cp38-linux_x86_64.whl ; python_version == '3.8'",
   	#"torch @ https://download.pytorch.org/whl/cpu/torch-1.13.1%2Bcpu-cp39-cp39-linux_x86_64.whl ; python_version == '3.9'",
@@ -90,7 +90,8 @@ dependencies = [
   "types-emoji",
   "Sphinx~=5.3.0",
   "sphinx-autobuild",
-  "sphinx-rtd-theme"
+  "sphinx-rtd-theme",
+  "torch~=1.13.1",
   # "furo", # sphinx theme
 
 ]

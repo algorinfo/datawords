@@ -7,7 +7,7 @@ import numpy as np
 from pydantic import BaseModel
 from sklearn.metrics.pairwise import cosine_similarity
 
-from datawords import parsers
+from datawords import constants, parsers
 
 
 class Entity(BaseModel):
@@ -206,3 +206,4 @@ class WordSearch:
                 c.update(result[0])
 
         return c
+
