@@ -195,7 +195,9 @@ class TextIndex:
         ix.load(f"{fp}/{name}.ann")
 
         with open(f"{fp}/{name}.map.json", "r") as f:
-            id_mapper = json.loads(f.read())
+            idm = json.loads(f.read())
+
+        id_mapper = {int(k): v for k, v in idm.items()}
 
         if not words_model:
             words_model = Word2VecHelper.load(meta.words_model_path)
@@ -359,7 +361,7 @@ class SQLiteIndex:
 
     @property
     def total(self) -> int:
-        """ Returns the total of documents stored in the index. """
+        """Returns the total of documents stored in the index."""
         cur = self.db.cursor()
         res = cur.execute("select count(*) from search_index;").fetchone()
         cur.close()
