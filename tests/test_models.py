@@ -1,35 +1,11 @@
 import tempfile
 
 from gensim.models import KeyedVectors, Word2Vec
-from gensim.models.phrases import FrozenPhrases
 
 from datawords import parsers
-from datawords.models import PhrasesModel, Word2VecHelper
+from datawords.models import Word2VecHelper
+from .shared import open_texts
 
-
-def open_texts():
-    with open("tests/texts.txt", "r") as f:
-        texts = f.readlines()
-    for t in texts:
-        _t = t.strip()
-        if _t:
-            yield _t
-
-
-
-def test_models_phrases():
-    texts = open_texts()
-    parser_conf = parsers.ParserConf(lang="en")
-    model = PhrasesModel(parser_conf)
-    model.fit(texts)
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        fp = f"{tmpdir}/tests"
-        model.save(fp)
-        model2 = PhrasesModel.load(fp)
-
-    assert isinstance(model.model, FrozenPhrases)
-    assert isinstance(model2.model, FrozenPhrases)
 
 
 def test_models_word2vec():

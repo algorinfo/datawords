@@ -3,6 +3,7 @@ ALPHANUMERIC_REGEX = r"[a-zA-Z0-9:/\#]+"
 ALPHANUMERIC_ACCENT_REGEX = r"[A-zÀ-ú0-9]+"
 WORDS_ACCENT_REGEX = r"[A-zÀ-ú:/\#-]+"
 WORDS_REGEX = r"[a-zA-Z:/\#]+"
+WORDS_REGEX_DEFAULT = r"\w+"
 URL_REGEX = r"https?://\S+"
 
 CONNECTOR_WORDS = {

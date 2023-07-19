@@ -2,16 +2,6 @@ Models
 ==============
 
 
-PhrasesModel
-^^^^^^^^^^^^^^^^^^
-
-The **PhrasesModel** is used to build bgrams.
-In this case, it's a wrapper around `Gensim Phrases <https://radimrehurek.com/gensim/models/phrases.html>`_
-
-.. autoclass:: datawords.models.PhrasesModel
-               :members:
-
-
 Word2VecHelper
 ^^^^^^^^^^^^^^^^^^
 
