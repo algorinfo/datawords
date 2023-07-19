@@ -11,7 +11,8 @@ from datawords import _utils, constants
 
 
 class ParserProto(ABC):
-    """ Abstract class that any parser should agree with. """
+    """Abstract class that any parser should agree with."""
+
     @abstractmethod
     def parse(self, txt: str) -> List[str]:
         pass
@@ -22,6 +23,7 @@ class ParserConf:
     """
     Related to :meth:`doc_parser`
     """
+
     lang: str = "en"
     emo_codes: bool = False
     strip_accents: bool = False
@@ -59,7 +61,7 @@ def load_stop2(lang="en", *, models_path=None, strip_accents=True) -> Set[str]:
 
     If `models_path` is ommited then it will look internally
     for the list of words. Actually, it supports **en**, **pt** and **es**
-    
+
     """
     if models_path:
         fp = f"{models_path}/stop_{lang}.txt"
@@ -213,6 +215,7 @@ class SentencesParser(ParserProto):
         strip_accents=False,
         numbers=True,
         stop_words=Set[str],
+        parse_urls=False,
     ):
         self._lang = lang
         self._lower = lower
@@ -222,6 +225,7 @@ class SentencesParser(ParserProto):
         self._strip_accents = strip_accents
         self._numbers = numbers
         self._stopw = stop_words
+        self._parse_urls = parse_urls
 
     def parse(self, txt: str) -> List[str]:
         words = doc_parser(
@@ -232,10 +236,24 @@ class SentencesParser(ParserProto):
             strip_accents=self._strip_accents,
             lower=self._lower,
             numbers=self._numbers,
+            parse_urls=self._parse_urls
         )
         if self._phrases:
             return self._phrases[words]
         return words
+
+    def export_conf(self) -> ParserConf:
+        """
+        It exports the parser configuration but omits stopw path and stemmer path. 
+        """
+        return ParserConf(
+            lang=self._lang,
+            emo_codes=self._emo_codes,
+            strip_accents=self._strip_accents,
+            lower=self._lower,
+            numbers=self._numbers,
+            parse_urls=self._parse_urls,
+        )
 
 
 class SentencesIterator:
