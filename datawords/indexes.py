@@ -5,13 +5,14 @@ from typing import Any, Callable, Dict, List, Union
 
 import numpy as np
 from annoy import AnnoyIndex
-from pydantic import BaseModel
+from attrs import define
 
 from datawords import _utils, parsers
 from datawords.models import Word2VecHelper
 
 
-class LiteDoc(BaseModel):
+@define
+class LiteDoc:
     """
     Used by :class:`SQLiteIndex`
     """
@@ -19,8 +20,8 @@ class LiteDoc(BaseModel):
     id: str
     text: str
 
-
-class TextIndexMeta(BaseModel):
+@define
+class TextIndexMeta:
     name: str
     words_model_path: str
     vector_size: int = 100

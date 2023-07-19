@@ -1,5 +1,8 @@
+import json
 import os
 from pathlib import Path
+
+from attrs import asdict as attrs_dict
 
 
 def pkg_route() -> str:
@@ -27,3 +30,11 @@ def mkdir_p(fp):
     similar to mkdir -p in unix systems.
     """
     Path(fp).mkdir(parents=True, exist_ok=True)
+
+
+def asjson(attr_model):
+    _d = attrs_dict(attr_model)
+    return json.dumps(_d)
+
+def asdict(attr_model):
+    return attrs_dict(attr_model)

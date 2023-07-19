@@ -2,15 +2,17 @@ import json
 import os
 from typing import Iterable, List, Optional, Union
 
+import cattrs
 import numpy as np
+from attrs import define
 from gensim.models import KeyedVectors, Word2Vec
 from gensim.models.phrases import FrozenPhrases, Phrases
-from pydantic import BaseModel
 
 from datawords import _utils, constants, parsers
 
 
-class PhrasesModelMeta(BaseModel):
+@define
+class PhrasesModelMeta:
     name: str
     lang: str
     parser_conf: parsers.ParserConf
@@ -20,7 +22,8 @@ class PhrasesModelMeta(BaseModel):
     version: str = _utils.get_version()
 
 
-class W2VecMeta(BaseModel):
+@define
+class W2VecMeta:
     name: str
     lang: str
     parser_conf: parsers.ParserConf
@@ -160,7 +163,7 @@ class PhrasesModel:
         )
         self._model.save(f"{fp}/{name}.bin")
         with open(f"{fp}/{name}.json", "w") as f:
-            f.write(conf.json())
+            f.write(_utils.asjson(conf))
 
     @classmethod
     def load(cls, fp: Union[str, os.PathLike]) -> "PhrasesModel":
@@ -176,7 +179,7 @@ class PhrasesModel:
         name = str(fp).rsplit("/", maxsplit=1)[1]
         with open(f"{fp}/{name}.json", "r") as f:
             jmeta = json.loads(f.read())
-            meta = PhrasesModelMeta(**jmeta)
+            meta = cattrs.structure(jmeta, PhrasesModelMeta)
         model = Phrases.load(f"{fp}/{name}.bin")
         obj = cls(
             parser_conf=meta.parser_conf,
@@ -348,7 +351,7 @@ class Word2VecHelper:
         self.model.save(f"{fp}/{name}.bin")
         self.model.wv.save(f"{fp}/{name}.kv")
         with open(f"{fp}/{name}.json", "w") as f:
-            f.write(conf.json())
+            f.write(_utils.asjson(conf))
 
     @classmethod
     def load(cls, fp: Union[str, os.PathLike], keyed_vectors=False) -> "Word2VecHelper":
@@ -359,7 +362,7 @@ class Word2VecHelper:
             model = Word2Vec.load(f"{fp}/{name}.bin")
         with open(f"{fp}/{name}.json", "r") as f:
             jmeta = json.loads(f.read())
-            meta = W2VecMeta(**jmeta)
+            meta = cattrs.structure(jmeta, W2VecMeta)
         phrases = None
         if meta.phrases_model_path:
             phrases = PhrasesModel.load(meta.phrases_model_path)

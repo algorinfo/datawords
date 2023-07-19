@@ -4,13 +4,14 @@ from collections import Counter
 from typing import Dict, List
 
 import numpy as np
-from pydantic import BaseModel
+from attrs import define
 from sklearn.metrics.pairwise import cosine_similarity
 
-from datawords import constants, parsers
+from datawords import parsers
 
 
-class Entity(BaseModel):
+@define
+class Entity:
     txt: str
     start_char: int
     end_char: int
@@ -206,4 +207,3 @@ class WordSearch:
                 c.update(result[0])
 
         return c
-

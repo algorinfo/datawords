@@ -17,7 +17,7 @@ def open_texts():
 
 
 
-def test_models2_phrases():
+def test_models_phrases():
     texts = open_texts()
     parser_conf = parsers.ParserConf(lang="en")
     model = PhrasesModel(parser_conf)
@@ -32,7 +32,7 @@ def test_models2_phrases():
     assert isinstance(model2.model, FrozenPhrases)
 
 
-def test_models2_word2vec():
+def test_models_word2vec():
     texts = open_texts()
     parser_conf = parsers.ParserConf(lang="en")
     # model = PhrasesModel(parser_conf)

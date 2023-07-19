@@ -5,7 +5,7 @@ from typing import Any, Iterable, List, Optional, Set
 
 import emoji
 import unidecode
-from pydantic import BaseModel
+from attrs import define
 
 from datawords import _utils, constants
 
@@ -17,14 +17,8 @@ class ParserProto(ABC):
         pass
 
 
-class Entity(BaseModel):
-    txt: str
-    start_char: int
-    end_char: int
-    label: str
-
-
-class ParserConf(BaseModel):
+@define
+class ParserConf:
     """
     Related to :meth:`doc_parser`
     """

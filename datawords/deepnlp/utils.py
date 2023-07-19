@@ -1,11 +1,12 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from attrs import define, field
 
 
-class GPUInfo(BaseModel):
+@define
+class GPUInfo:
     device_count: int = 0
-    devices: List[str] = Field(default_factory=list)
+    devices: List[str] = field(default=[])
 
 
 def get_gpu_info(framework="pt") -> Optional[GPUInfo]:
