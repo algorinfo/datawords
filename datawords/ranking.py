@@ -46,7 +46,7 @@ class PageRankTFIDF:
     """PageRank based on TFIDF"""
 
     def __init__(
-        self, tokenizer, barrier=0.7, min_df=1, max_df=0.9, ngram_range=(1, 1)
+        self, tokenizer=None, barrier=0.7, min_df=1, max_df=0.9, ngram_range=(1, 1)
     ):
         # pylint: disable=too-many-arguments
         self.tf = TfidfVectorizer(
@@ -189,8 +189,8 @@ class PageRankAnnoy:
         return scores
 
     def rank(self, index: List[Any], top_n=5):
-        """ given a `index` build a ranking using the scores created
-        by PageRank. """
+        """given a `index` build a ranking using the scores created
+        by PageRank."""
         ranking = zip(index, self.scores)
         best = sorted(ranking, key=lambda tup: tup[1], reverse=True)[:top_n]
         return best
@@ -206,3 +206,28 @@ class PageRankAnnoy:
     @property
     def adjacency(self):
         return self._adj
+
+
+def rank(index: List[Any], scores: np.ndarray, top_n=5):
+    """
+    given a score result from any of the PageRank models
+    an a index which correlates with the data used to calculate
+    pagerank then, reorder score from top to bottom.
+
+    To produce a simple numeric index, :function:`datawords.ranking.numeric_index`
+    could be used. 
+    """
+    ranking = zip(index, scores)
+    best = sorted(ranking, key=lambda tup: tup[1], reverse=True)
+    if top_n:
+        return best[:top_n]
+    return best
+
+
+def numeric_index(values: List[Any]) -> List[int]:
+    """
+    given a list of values of any type it produce
+    an incremental index of int.
+    useful for :function:`datawords.ranking.rank`
+    """
+    return list(range(0, len(values)))

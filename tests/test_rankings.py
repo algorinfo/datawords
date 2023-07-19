@@ -1,13 +1,7 @@
 import numpy as np
 
 from datawords import models, parsers, ranking
-
-
-def open_texts():
-    with open("tests/texts.txt", "r") as f:
-        texts = f.readlines()
-    for t in texts:
-        yield t
+from .shared import open_texts
 
 
 def test_ranking_pagerank_annoy():
@@ -22,5 +16,15 @@ def test_ranking_pagerank_annoy():
     scores = pra.fit_transform(arrs)
     index = [ix for ix, _ in enumerate(texts)]
     rank = pra.rank(index)
+    assert len(rank) == 5
+    assert isinstance(scores, np.ndarray)
+
+
+def test_ranking_tfidf():
+    texts = list(open_texts())
+    pr = ranking.PageRankTFIDF()
+    scores = pr.fit_transform(texts)
+    index = ranking.numeric_index(texts)
+    rank = ranking.rank(index, scores)
     assert len(rank) == 5
     assert isinstance(scores, np.ndarray)
