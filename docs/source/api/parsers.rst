@@ -49,10 +49,13 @@ In this case, it's a wrapper around `Gensim Phrases <https://radimrehurek.com/ge
 Other functions
 ^^^^^^^^^^^^^^^^
 
-.. autofunction:: datawords.parsers.load_stop2
+.. autofunction:: datawords.parsers.parser_from_conf
+
+.. autofunction:: datawords.parsers.load_stop
 
 .. autofunction:: datawords.parsers.generate_ngrams
 
 .. autofunction:: datawords.parsers.norm_token
 
 .. autofunction:: datawords.parsers.apply_regex
+

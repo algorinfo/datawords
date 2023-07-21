@@ -64,8 +64,8 @@ def load_stop(lang="en", *, models_path=None, strip_accents=True) -> StopWords:
     """
     Open a list of stop words.
 
-    If `models_path` is ommited then it will look internally
-    for the list of words. Actually, it supports **en**, **pt** and **es**
+    If `models_path` is ommited then it will look internally in the
+    datawords package. Actually, it supports **en**, **pt** and **es**
 
     """
     if models_path:
@@ -257,7 +257,8 @@ def regex_parser(reg_expr, word, stopw: FrozenSet[str]) -> str:
             if word not in stopw:
                 final.append(word)
     return final
-        
+
+
 def _apply_regex(reg_expr, word) -> str:
     _found = re.findall(reg_expr, word)
     if len(_found) > 0:
@@ -404,24 +405,35 @@ class SentencesParser(ParserProto):
         self._parse_urls = parse_urls
 
     def parse(self, txt: str) -> List[str]:
-        words = doc_parser(
-            txt,
-            self._stopw,
-            stemmer=self._stemmer,
-            emo_codes=self._emo_codes,
-            strip_accents=self._strip_accents,
-            lower=self._lower,
-            numbers=self._numbers,
-            parse_urls=self._parse_urls,
-        )
+        """
+        It gets a txt which could be a phrase, a doc, or anything
+        in between, and then parse it using the phraase model or
+        the parser.
+        """
+
         if self._phrases:
-            return self._phrases[words]
-        return words
+            parsed = self._phrases.parse(txt)
+        else:
+            parsed = doc_parser(
+                txt,
+                self._stopw,
+                stemmer=self._stemmer,
+                emo_codes=self._emo_codes,
+                strip_accents=self._strip_accents,
+                lower=self._lower,
+                numbers=self._numbers,
+                parse_urls=self._parse_urls,
+            )
+        return parsed
 
     def export_conf(self) -> ParserConf:
         """
         It exports the parser configuration but omits stopw path and stemmer path.
         """
+        phrases_model_path = None
+        if self._phrases:
+            conf = self._phrases.export_conf()
+            phrases_model_path = conf.path
         return ParserConf(
             lang=self._lang,
             emo_codes=self._emo_codes,
@@ -429,12 +441,21 @@ class SentencesParser(ParserProto):
             lower=self._lower,
             numbers=self._numbers,
             parse_urls=self._parse_urls,
+            phrases_model_path=phrases_model_path,
         )
 
 
 def parser_from_conf(
-    conf: ParserConf, *, stopw: Optional[StopWords] = None, phrases=None
+    conf: ParserConf,
+    *,
+    stopw: Optional[StopWords] = None,
+    phrases: Optional[PhrasesModel] = None,
 ):
+    """
+    It loads :class:`SentencesParser` based on the :class:`ParserConf` configuration.
+    Also it's possible give an already intialized stop words and phrases objects,
+    to avoid multiple instances in a same process. 
+    """
     _stopw = stopw or load_stop(lang=conf.lang, models_path=conf.stopw_path)
     if not phrases and conf.phrases_model_path:
         phrases = PhrasesModel.load(conf.phrases_model_path)

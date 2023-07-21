@@ -40,29 +40,9 @@ class Word2VecHelper:
         stopw: Optional[parsers.StopWords] = None,
     ):
         """
-
-        :param parser_conf: configuration of the parser
-        :type parser_conf: parsers.ParserConf
-        :param min_count: Ignore all words and bigrams with total collected
-            count lower than this value.
-        :type min_count: Optional[float]
-        :param threshold: Represent a score threshold for forming the phrases
-            (higher means fewer phrases). A phrase of words a followed by b is
-            accepted if the score of the phrase is greater than threshold.
-            Heavily depends on concrete scoring-function, see the scoring
-            parameter.
-        :param max_vocab_size: Maximum size (number of tokens) of the
-            vocabulary. Used to control pruning of less common words,
-            to keep memory under control. The default of 40M needs
-            about 3.6GB of RAM. Increase/decrease max_vocab_size
-            depending on how much available memory you have.
-        :type max_vocab_size: Optional[int] int
-        :param connector_words: Set of words that may be included within
-           a phrase, without affecting its scoring. If any is provided it
-           will use the lang value from the parser_conf. By default
-           datawords include CONNECTOR_WORDS for English, Portugues
-           an Spanish.
-        :type connector_words: Frozenset[str]
+        It's a wrapper around the original implementation of Word2Vec from the Gensim library.
+        It adds the option to store and track the training params of the model
+        including the parser used to do so. 
 
         """
 
@@ -75,7 +55,7 @@ class Word2VecHelper:
         self._min_count = min_count
         self._workers = workers
         self._epoch = epoch
-        self._parser = parsers.parser_from_conf(parser_conf, stopw=stopw)
+        self._parser = parsers.parser_from_conf(parser_conf, stopw=stopw, phrases=phrases_model)
         self.model: Union[Word2Vec, KeyedVectors] = model
         self._using_kv = using_kv
         self.loaded_from = loaded_from
