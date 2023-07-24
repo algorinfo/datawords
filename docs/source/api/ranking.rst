@@ -8,3 +8,11 @@ PageRankAnnoy
                :members:
 
 
+
+PageRankTFIDF
+^^^^^^^^^^^^^^^
+
+.. autoclass:: datawords.ranking.PageRankTFIDF
+               :members:
+
+

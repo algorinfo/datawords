@@ -1,11 +1,12 @@
 import json
 import os
 import sqlite3
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import numpy as np
 from annoy import AnnoyIndex
-from attrs import define, asdict
+from attrs import asdict, define
+from tqdm import tqdm
 
 from datawords import _utils, parsers
 from datawords.models import Word2VecHelper
@@ -14,11 +15,12 @@ from datawords.models import Word2VecHelper
 @define
 class LiteDoc:
     """
-    Used by :class:`SQLiteIndex`
+    Represents a document indexed in the :class:`SQLiteIndex`
     """
 
     id: str
     text: str
+
 
 @define
 class TextIndexMeta:
@@ -105,14 +107,16 @@ class TextIndex:
     @classmethod
     def build(
         cls,
-        ids: List[Any],
+        ids: Iterable,
         *,
         getter: Callable,
-        words_model_path: str = None,
-        words_model: Word2VecHelper = None,
+        words_model_path: Optional[str] = None,
+        words_model: Optional[Word2VecHelper] = None,
         distance_metric: str = "angular",
         ann_trees: int = 10,
         n_jobs: int = -1,
+        progress_bar=True,
+        total_ids=None,
     ) -> "TextIndex":
         """
         Build the TextIndex . Use as follows:
@@ -158,7 +162,7 @@ class TextIndex:
             words_model = Word2VecHelper.load(words_model_path, keyed_vectors=True)
         ix = AnnoyIndex(words_model.vector_size, distance_metric)
         id_mapper = {}
-        for _ix, _id in enumerate(ids):
+        for _ix, _id in tqdm(enumerate(ids), disable=not progress_bar, total=total_ids):
             data = getter(_id)
             v = words_model.encode(data)
             ix.add_item(_ix, v)
@@ -175,7 +179,7 @@ class TextIndex:
 
     @classmethod
     def load(
-        cls, fp: Union[str, os.PathLike], words_model: Word2VecHelper = None
+        cls, fp: Union[str, os.PathLike], words_model: Optional[Word2VecHelper] = None
     ) -> "TextIndex":
         """loads the TextIndex model.
 
@@ -319,6 +323,42 @@ class SQLiteIndex:
         cur.close()
         return added
 
+    @classmethod
+    def build(
+        cls,
+        ids: Iterable,
+        *,
+        getter: Callable,
+        stopwords=set(),
+        progress_bar=True,
+        total_ids=None,
+        sqlite: str = ":memory:",
+    ) -> "SQLiteIndex":
+        obj = cls(sqlite, stopwords)
+        cur = obj.db.cursor()
+        tracking = []
+        for _id in tqdm(ids, disable=not progress_bar, total=total_ids):
+            data = getter(_id)
+            doc = LiteDoc(
+                id=_id,
+                text=data
+            )
+            try:
+                obj._insert(cur, doc)
+                tracking.append(True)
+            except sqlite3.IntegrityError:
+                tracking.append(False)
+        obj.db.commit()
+        cur.close()
+        return obj
+
+    @classmethod
+    def load(
+        cls, sqlite: str, stopwords=set()
+    ) -> "SQLiteIndex":
+        obj = cls(sqlite, stopwords)
+        return obj
+
     def add_batch(self, docs: List[LiteDoc]) -> List[bool]:
         """
         Add documents in batch.
@@ -369,7 +409,7 @@ class SQLiteIndex:
         cur.close()
         return res[0]
 
-    def search(self, text: str, limit: int = 1) -> List[LiteDoc]:
+    def search(self, text: str, top_n: int = 5) -> List[LiteDoc]:
         """
         Performs a search in the index.
 
@@ -386,7 +426,7 @@ class SQLiteIndex:
         try:
             result = cur.execute(
                 f"""select * from search_docs where text MATCH '"{words}" *'
-                                    limit {limit}"""
+                                    limit {top_n}"""
             ).fetchall()
 
         except sqlite3.OperationalError:

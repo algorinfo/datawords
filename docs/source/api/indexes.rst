@@ -9,6 +9,10 @@ TextIndex
 .. autoclass:: datawords.indexes.TextIndex
                :members:
 
+.. autoclass:: datawords.indexes.TextIndexMeta
+               :members:
+
+
 
 
 SQLiteIndex

@@ -46,6 +46,20 @@ def test_indexes_sqlite_search():
     ix = SQLiteIndex(stopwords=stopw)
     ix.add_batch(docs)
     total = ix.total
-    res = ix.search("coco", limit=1)
+    res = ix.search("coco", top_n=1)
+    assert isinstance(res[0], LiteDoc)
+    assert total == 5
+
+def test_indexes_sqlite_build():
+    elements = {x[0]: x[1] for x in enumerate(list(open_texts())[:5])}
+
+    def getter(id_):
+        return elements[id_]
+    stopw = parsers.load_stop2()
+    # docs = [LiteDoc(id=ix, text=t) for ix, t in enumerate(texts[:5])]
+    ids = list(elements.keys())
+    ix = SQLiteIndex.build(ids=ids, getter=getter, stopwords=stopw)
+    total = ix.total
+    res = ix.search("coco", top_n=1)
     assert isinstance(res[0], LiteDoc)
     assert total == 5
