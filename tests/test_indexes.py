@@ -1,8 +1,10 @@
+from pathlib import Path
 from annoy import AnnoyIndex
-
+from tempfile import mkdtemp
 from datawords import parsers
 from datawords.indexes import LiteDoc, SQLiteIndex, TextIndex
 from datawords.models import Word2VecHelper
+
 
 
 def open_texts():
@@ -29,7 +31,12 @@ def test_indexes_words_index():
     # WordsIndex(words_model=wv, id_mapper={})
     ids = list(elements.keys())
     ix = TextIndex.build(ids, getter=getter, words_model=wv)
+    tmp = mkdtemp()
+    ix.save(tmp)
+    ix2 = TextIndex.load(tmp, words_model=wv)
+    
     assert isinstance(ix.ix, AnnoyIndex)
+    assert isinstance(ix2, TextIndex)
 
 
 def test_indexes_sqlite_search():

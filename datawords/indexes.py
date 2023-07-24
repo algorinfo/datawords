@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Union
 
 import numpy as np
 from annoy import AnnoyIndex
-from attrs import define
+from attrs import define, asdict
 
 from datawords import _utils, parsers
 from datawords.models import Word2VecHelper
@@ -227,12 +227,13 @@ class TextIndex:
             name=name,
             words_model_path=self.words.loaded_from,
             vector_size=self._vector_size,
-            ann_tress=self._ann_trees,
+            ann_trees=self._ann_trees,
             distance_metric=self._distance_metric,
         )
 
         with open(f"{fp}/{name}.json", "w") as f:
-            f.write(conf.json())
+            _d = asdict(conf)
+            f.write(json.dumps(_d))
 
         with open(f"{fp}/{name}.map.json", "w") as f:
             f.write(json.dumps(self.id_mapper))
