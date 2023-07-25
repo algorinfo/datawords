@@ -21,6 +21,11 @@ def test_models_word2vec():
         wv2 = Word2VecHelper.load(fp)
         kv = Word2VecHelper.load(fp, keyed_vectors=True)
 
+    encoded = kv.encode("hello world")
+
     assert isinstance(wv.model, Word2Vec)
     assert isinstance(wv2.model, Word2Vec)
     assert isinstance(kv.model, KeyedVectors)
+    assert encoded.any()
+
+

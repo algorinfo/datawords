@@ -16,6 +16,26 @@ def open_texts():
             yield _t
 
 
+def test_indexes_lite_doc():
+    l1 = LiteDoc(id="test", text="pepe")
+    l2 = LiteDoc(id="test", text="other text")
+    l3 = LiteDoc(id="different", text="other text")
+    s = set()
+    s.add(l1)
+    s.add(l2)
+    s.add(l3)
+    assert len(s) == 2
+    assert l1 == l2
+    assert l1 != l3
+
+def test_indexes_sqlite_get():
+    l1 = LiteDoc(id="pepe", text="pepe")
+    ix = SQLiteIndex()
+    ix.add_batch([l1])
+    doc = ix.get_doc("pepe")
+
+    assert doc.text == "pepe"
+
 def test_indexes_words_index():
     texts = open_texts()
     parser_conf = parsers.ParserConf(lang="en")
@@ -63,3 +83,16 @@ def test_indexes_sqlite_build():
     res = ix.search("coco", top_n=1)
     assert isinstance(res[0], LiteDoc)
     assert total == 5
+
+
+def test_indexes_sqlite_search_query():
+    elements = {x[0]: x[1] for x in enumerate(list(open_texts())[:5])}
+
+    def getter(id_):
+        return elements[id_]
+    stopw = parsers.load_stop2()
+    # docs = [LiteDoc(id=ix, text=t) for ix, t in enumerate(texts[:5])]
+    ids = list(elements.keys())
+    ix = SQLiteIndex.build(ids=ids, getter=getter, stopwords=stopw)
+    res = ix.search_query("cocomelon AND goal", top_n=1)
+    assert isinstance(res[0], LiteDoc)

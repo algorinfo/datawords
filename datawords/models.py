@@ -67,7 +67,10 @@ class Word2VecHelper:
 
     @property
     def wv(self) -> Union[Word2Vec, KeyedVectors]:
-        return self.model
+        if self._using_kv:
+            return self.model
+        else:
+            return self.model.wv
 
     def fit(self, X: Iterable):
         """
@@ -128,7 +131,7 @@ class Word2VecHelper:
         vectors = []
         for word in sentence:
             try:
-                _vect = self.model.wv[word]
+                _vect = self.wv[word]
                 vectors.append(_vect)
             except KeyError:
                 pass
@@ -185,7 +188,7 @@ class Word2VecHelper:
             meta = cattrs.structure(jmeta, W2VecMeta)
         phrases = None
         if meta.phrases_model_path:
-            phrases = PhrasesModel.load(meta.phrases_model_path)
+            phrases = parsers.PhrasesModel.load(meta.phrases_model_path)
         obj = cls(
             parser_conf=meta.parser_conf,
             phrases_model=phrases,
