@@ -21,6 +21,12 @@ class LiteDoc:
     id: str
     text: str
 
+    def __hash__(self):
+        return hash(self.id)
+
+    def __eq__(self, other):
+        return self.id == other.id
+
 
 @define
 class TextIndexMeta:
@@ -260,6 +266,11 @@ class SQLiteIndex:
         self._create_tables()
         self._stopw = stopwords
 
+    def journal_mode(self):
+        cur = self.db.cursor()
+        cur.execute("PRAGMA jounral_mode=WAL;")
+        cur.close()
+
     def _create_tables(self):
         cur = self.db.cursor()
         cur.execute(
@@ -282,6 +293,12 @@ class SQLiteIndex:
             parse_urls=False,
         )
         return tokens
+
+    def parse(self, txt) -> List[str]:
+        """
+        Parse a text
+        """
+        return self._parse(txt)
 
     def _insert(self, cur, doc: LiteDoc):
         tokens = self._parse(doc.text)
@@ -339,10 +356,7 @@ class SQLiteIndex:
         tracking = []
         for _id in tqdm(ids, disable=not progress_bar, total=total_ids):
             data = getter(_id)
-            doc = LiteDoc(
-                id=_id,
-                text=data
-            )
+            doc = LiteDoc(id=_id, text=data)
             try:
                 obj._insert(cur, doc)
                 tracking.append(True)
@@ -353,9 +367,7 @@ class SQLiteIndex:
         return obj
 
     @classmethod
-    def load(
-        cls, sqlite: str, stopwords=set()
-    ) -> "SQLiteIndex":
+    def load(cls, sqlite: str, stopwords=set()) -> "SQLiteIndex":
         obj = cls(sqlite, stopwords)
         return obj
 
@@ -384,6 +396,18 @@ class SQLiteIndex:
         result = cur.execute(f"select * from {table} LIMIT {offset}, {limit};")
         return result
 
+    def get_doc(self, id: str) -> LiteDoc:
+        cur = self.db.cursor()
+        # row = cur.execute(f"select * from search_docs where search_docs.id={id};").fetchone()
+
+        row = cur.execute(
+                f"""select * from search_docs where text MATCH '{id}'
+                                    limit 1"""
+        ).fetchone()
+
+        cur.close()
+        return LiteDoc(id=row[0], text=row[1])
+
     def list_docs(self, limit=10, offset=0) -> List[LiteDoc]:
         cur = self.db.cursor()
         rows = self._list(cur, limit=limit, offset=offset, table="search_docs")
@@ -411,7 +435,14 @@ class SQLiteIndex:
 
     def search(self, text: str, top_n: int = 5) -> List[LiteDoc]:
         """
-        Performs a search in the index.
+        Performs a search in the index. It will parse and match
+        the wodos as:
+
+        MATCH '"{words}" *'
+
+        To use a more low level search query use
+        :method:`SQLiteIndex.search_query`
+
 
         :param text: text to search.
         :type text: str
@@ -426,6 +457,32 @@ class SQLiteIndex:
         try:
             result = cur.execute(
                 f"""select * from search_docs where text MATCH '"{words}" *'
+                                    limit {top_n}"""
+            ).fetchall()
+
+        except sqlite3.OperationalError:
+            result = []
+        cur.close()
+        return [LiteDoc(id=r[0], text=r[1]) for r in result]
+
+    def search_query(self, query: str, top_n: int = 5) -> List[LiteDoc]:
+        """
+        Performs a search query into the sqlite database.
+
+        'search AND (sqlite OR help)'
+
+        :param query: query to search
+        :type query: str
+        :param limit: how many results retrieve.
+        :type limit: int
+        :return: Documents found
+        :rtype: List[LiteDoc]
+        """
+        # tokens = self._parse(text)
+        cur = self.db.cursor()
+        try:
+            result = cur.execute(
+                f"""select * from search_docs where text MATCH '{query}'
                                     limit {top_n}"""
             ).fetchall()
 
