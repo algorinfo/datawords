@@ -274,10 +274,10 @@ class SQLiteIndex:
     def _create_tables(self):
         cur = self.db.cursor()
         cur.execute(
-            'create virtual table search_docs using fts5(id, text, tokenize="ascii");'
+            'CREATE VIRTUAL TABLE IF NOT EXISTS search_docs using fts5(id, text, tokenize="ascii");'
         )
         cur.execute(
-            """CREATE TABLE search_index
+            """CREATE TABLE IF NOT EXISTS search_index
         (id INTEGER PRIMARY KEY,doc_id TEXT NOT NULL UNIQUE);"""
         )
         cur.close()
