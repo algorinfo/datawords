@@ -263,6 +263,7 @@ class SQLiteIndex:
         :type stopwords: Set[str]
         """
         self.db = sqlite3.connect(sqlite)
+        self.path = sqlite
         self._create_tables()
         self._stopw = stopwords
 
