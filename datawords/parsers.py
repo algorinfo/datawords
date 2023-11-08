@@ -270,13 +270,13 @@ def _apply_regex(reg_expr, word) -> str:
     return ""
 
 
-def norm_token(tkn: str) -> str:
+def norm_token(tkn: str, rule=constants.ALPHANUMERIC_REGEX) -> str:
     """
     An opinated token normalizer. It lower any string, strip any accents
     and keeps letters and number from a token.
     """
-    final = unidecode.unidecode(tkn.lower().strip())
-    final = _apply_regex(constants.ALPHANUMERIC_REGEX, tkn)
+    decoded = unidecode.unidecode(tkn.lower().strip())
+    final = _apply_regex(rule, decoded)
     return final
 
 
@@ -454,7 +454,7 @@ def parser_from_conf(
     """
     It loads :class:`SentencesParser` based on the :class:`ParserConf` configuration.
     Also it's possible give an already intialized stop words and phrases objects,
-    to avoid multiple instances in a same process. 
+    to avoid multiple instances in a same process.
     """
     _stopw = stopw or load_stop(lang=conf.lang, models_path=conf.stopw_path)
     if not phrases and conf.phrases_model_path:
